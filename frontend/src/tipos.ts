@@ -70,10 +70,39 @@ export interface Panel {
   }[]
 }
 
+export interface Cliente {
+  id: number
+  documento: string
+  nombre: string
+  telefono: string | null
+}
+
+// Ficha del cliente con su historial de compras
+export interface FichaCliente extends Cliente {
+  compras: number
+  totalGastado: string
+  ultimaCompra: string | null
+  ventas: {
+    id: number
+    fecha: string
+    total: string
+    productos: { nombre: string; presentacion: string | null; cantidad: number }[]
+  }[]
+}
+
+// Conteo para el aviso del menú (sin montos)
+export interface ResumenAlertas {
+  stockBajo: number
+  vencidos: number
+  porVencer30: number
+  total: number
+}
+
 export interface Venta {
   id: number
   fecha: string
   total: string
+  cliente: { id: number; documento: string; nombre: string } | null
   detalles: {
     id: number
     cantidad: number

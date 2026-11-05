@@ -13,6 +13,7 @@ import { LoteDisponible, repartirFefo } from "./fefo";
 
 const DETALLE_COMPLETO = {
   usuario: { select: { id: true, nombre: true } },
+  cliente: { select: { id: true, documento: true, nombre: true } },
   detalles: {
     orderBy: { id: "asc" },
     include: {
@@ -31,7 +32,10 @@ export class VentasService {
       where: { negocioId },
       orderBy: { fecha: "desc" },
       take: 50,
-      include: { usuario: { select: { id: true, nombre: true } } },
+      include: {
+        usuario: { select: { id: true, nombre: true } },
+        cliente: { select: { id: true, documento: true, nombre: true } },
+      },
     });
   }
 
@@ -58,6 +62,12 @@ export class VentasService {
 
     // Todo o nada: si falla cualquier producto, no se descuenta ni se guarda nada
     const ventaId = await this.prisma.$transaction(async (tx) => {
+      // El cliente, si viene, tiene que ser de este negocio: uno ajeno cuenta como inexistente
+      if (dto.clienteId !== undefined) {
+        const cliente = await tx.cliente.findFirst({ where: { id: dto.clienteId, negocioId } });
+        if (!cliente) throw new NotFoundException(`No existe el cliente con id ${dto.clienteId}`);
+      }
+
       // Solo productos del negocio del usuario: uno ajeno cuenta como inexistente
       const productos = await tx.producto.findMany({
         where: { id: { in: productoIds }, negocioId },
@@ -121,7 +131,13 @@ export class VentasService {
         new Prisma.Decimal(0),
       );
       const venta = await tx.venta.create({
-        data: { negocioId, usuarioId, total, detalles: { create: lineas } },
+        data: {
+          negocioId,
+          usuarioId,
+          clienteId: dto.clienteId,
+          total,
+          detalles: { create: lineas },
+        },
       });
 
       await tx.movimiento.createMany({

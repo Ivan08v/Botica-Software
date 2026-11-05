@@ -742,3 +742,78 @@ a.boton {
 .aviso.pendiente:not(div) {
   display: block;
 }
+
+/* --- Clientes y aviso de alertas --- */
+
+.acciones-encabezado {
+  display: flex;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.aviso-alertas {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #5c1a00;
+  text-decoration: none;
+  white-space: nowrap;
+  background: #fde68a;
+  border-radius: 999px;
+}
+
+.aviso-alertas:hover {
+  background: #fcd34d;
+}
+
+.solo-escritorio {
+  display: none;
+}
+
+@media (min-width: 48rem) {
+  .solo-escritorio {
+    display: inline;
+  }
+}
+
+h2.subtitulo {
+  margin-top: 1.25rem;
+  font-size: 1rem;
+}
+
+.cliente-venta {
+  margin-bottom: 1rem;
+}
+
+.cliente-venta .aviso {
+  margin-top: 0.75rem;
+}
+
+.cliente-venta .aviso label {
+  display: block;
+  margin-bottom: 0.6rem;
+}
+
+.cliente-venta .aviso .boton {
+  width: 100%;
+}
+
+.espacio-arriba {
+  margin-top: 0.85rem;
+}
+
+.fecha-dato {
+  font-size: 1.1rem !important;
+}
+
+/* La dueña tiene 6 opciones en el menú: en celulares angostos se achica un poco el texto */
+@media (max-width: 24rem) {
+  .menu a {
+    font-size: 0.74rem;
+  }
+}

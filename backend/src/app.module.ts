@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { AuthModule } from "./auth/auth.module";
+import { ClientesModule } from "./clientes/clientes.module";
 import { ImportacionModule } from "./importacion/importacion.module";
 import { LotesModule } from "./lotes/lotes.module";
 import { PanelModule } from "./panel/panel.module";
@@ -17,6 +18,7 @@ import { VentasModule } from "./ventas/ventas.module";
     ProductosModule,
     LotesModule,
     VentasModule,
+    ClientesModule,
     PanelModule,
     ImportacionModule,
     ReportesModule,

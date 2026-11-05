@@ -178,6 +178,7 @@ async function main() {
   await prisma.movimiento.deleteMany();
   await prisma.detalleVenta.deleteMany();
   await prisma.venta.deleteMany();
+  await prisma.cliente.deleteMany();
   await prisma.lote.deleteMany();
   await prisma.producto.deleteMany();
   await prisma.usuario.deleteMany();
@@ -206,6 +207,13 @@ async function main() {
     },
   });
   const lotesBotica = await cargarCatalogo(botica.id, dueno.id, productos, (i) => ean13(i + 1));
+  // Clientes frecuentes de ejemplo (DNI ficticios)
+  await prisma.cliente.createMany({
+    data: [
+      { negocioId: botica.id, documento: "45871236", nombre: "Rosa Quispe Huamán", telefono: "987654321" },
+      { negocioId: botica.id, documento: "70213458", nombre: "Carlos Mendoza Ríos", telefono: null },
+    ],
+  });
 
   // Negocio 2: veterinaria, para demostrar que cada negocio solo ve lo suyo
   const veterinaria = await prisma.negocio.create({

@@ -40,6 +40,7 @@ model Negocio {
   lotes       Lote[]
   ventas      Venta[]
   movimientos Movimiento[]
+  clientes    Cliente[]
 
   @@map("negocios")
 }
@@ -108,6 +109,24 @@ model Lote {
   @@map("lotes")
 }
 
+// Cliente de la botica, identificado por su DNI (o carné de extranjería) dentro del negocio.
+// Registrarlo es opcional en la venta: sirve para atenderlo mejor y ver su historial.
+model Cliente {
+  id        Int      @id @default(autoincrement())
+  negocioId Int      @map("negocio_id")
+  negocio   Negocio  @relation(fields: [negocioId], references: [id])
+  documento String // DNI (8 dígitos) o carné de extranjería
+  nombre    String
+  telefono  String?
+  creadoEn  DateTime @default(now()) @map("creado_en")
+  ventas    Venta[]
+
+  // El mismo DNI puede ser cliente de dos boticas distintas
+  @@unique([negocioId, documento])
+  @@index([negocioId, nombre])
+  @@map("clientes")
+}
+
 model Venta {
   id        Int            @id @default(autoincrement())
   negocioId Int            @map("negocio_id")
@@ -115,10 +134,14 @@ model Venta {
   fecha     DateTime       @default(now())
   usuarioId Int            @map("usuario_id")
   usuario   Usuario        @relation(fields: [usuarioId], references: [id])
+  // Opcional: la mayoría de ventas de mostrador son anónimas
+  clienteId Int?           @map("cliente_id")
+  cliente   Cliente?       @relation(fields: [clienteId], references: [id])
   total     Decimal        @db.Decimal(10, 2)
   detalles  DetalleVenta[]
 
   @@index([negocioId, fecha])
+  @@index([clienteId, fecha])
   @@map("ventas")
 }
 

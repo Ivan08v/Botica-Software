@@ -94,4 +94,22 @@ export class PanelService {
       })),
     };
   }
+
+  // Aviso liviano para el menú: cuántas alertas hay, sin montos.
+  // Reposición = productos activos por debajo de su stock mínimo.
+  async resumenAlertas(negocioId: number) {
+    const hoy = hoyEnLima();
+    const en30 = new Date(hoy);
+    en30.setUTCDate(en30.getUTCDate() + 30);
+    const conStock = { negocioId, cantidadActual: { gt: 0 }, producto: { activo: true } };
+
+    const [productos, vencidos, porVencer30] = await Promise.all([
+      this.productos.listar(negocioId),
+      this.prisma.lote.count({ where: { ...conStock, fechaVencimiento: { lt: hoy } } }),
+      this.prisma.lote.count({ where: { ...conStock, fechaVencimiento: { gte: hoy, lte: en30 } } }),
+    ]);
+    const stockBajo = productos.filter((p) => p.stockBajo).length;
+
+    return { stockBajo, vencidos, porVencer30, total: stockBajo + vencidos + porVencer30 };
+  }
 }

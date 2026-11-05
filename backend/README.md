@@ -10,7 +10,8 @@ API del sistema de inventario y vencimientos para boticas y veterinarias. NestJS
 | `usuarios` | Personas que usan el sistema, con rol `DUENO` o `VENDEDOR`; cada una pertenece a un negocio |
 | `productos` | Catálogo: nombre, laboratorio, presentación, código de barras, precio y stock mínimo |
 | `lotes` | Cada ingreso de mercadería: número de lote, fecha de vencimiento, cantidad y costo |
-| `ventas` | Cabecera de cada venta: fecha, usuario y total |
+| `clientes` | Clientes del negocio identificados por DNI (o carné de extranjería), con nombre y teléfono |
+| `ventas` | Cabecera de cada venta: fecha, usuario, cliente (opcional) y total |
 | `detalle_venta` | Una línea por cada lote usado en una venta (para FEFO) |
 | `movimientos` | Historial de todo lo que cambia el stock: ingresos, ventas, ajustes y bajas por vencimiento |
 
@@ -67,7 +68,7 @@ Todas las rutas llevan el prefijo `/api` y, salvo el login, piden el encabezado 
 | `DELETE /productos/:id` | DUENO | Desactiva (no borra, para conservar el historial) |
 | `GET /lotes?productoId=` | Cualquier rol | Lotes ordenados por vencimiento |
 | `POST /lotes` | Cualquier rol | Ingresa un lote y registra el movimiento `INGRESO` |
-| `POST /ventas` | Cualquier rol | Registra una venta `{ "items": [{ "productoId": 1, "cantidad": 3 }] }` descontando stock con FEFO |
+| `POST /ventas` | Cualquier rol | Registra una venta `{ "items": [{ "productoId": 1, "cantidad": 3 }], "clienteId": 5 }` descontando stock con FEFO (`clienteId` es opcional) |
 | `GET /ventas` | Cualquier rol | Últimas 50 ventas |
 | `GET /ventas/:id` | Cualquier rol | Venta con el detalle de cada lote usado |
 | `POST /importacion/vista-previa` | DUENO | Valida las filas de un Excel de inventario y devuelve el estado de cada una, sin guardar |
@@ -75,6 +76,12 @@ Todas las rutas llevan el prefijo `/api` y, salvo el login, piden el encabezado 
 | `GET /reportes/inventario?venceEnDias=` | DUENO | Lotes con stock valorizados al costo y a precio de venta; con `venceEnDias`, solo lo vencido o por vencer |
 | `GET /reportes/ventas?desde=&hasta=` | DUENO | Ventas de un período (días de Perú, hasta un año), con costo y ganancia por lote vendido |
 | `GET /panel` | DUENO | Vencimientos (vencidos, 30, 60 y 90 días), dinero en riesgo y productos con stock bajo |
+| `GET /alertas` | Cualquier rol | Conteo para el aviso del menú: productos por reponer, lotes vencidos y lotes que vencen en 30 días (sin montos) |
+| `GET /clientes?buscar=` | Cualquier rol | Busca clientes por DNI (inicio) o nombre |
+| `GET /clientes/documento/:documento` | Cualquier rol | Busca un cliente por su DNI desde la caja |
+| `GET /clientes/:id` | Cualquier rol | Ficha con número de compras, total gastado y sus últimas 20 ventas |
+| `POST /clientes` | Cualquier rol | Registra un cliente (DNI único por negocio) |
+| `PATCH /clientes/:id` | Cualquier rol | Edita nombre, documento o teléfono |
 
 ## Ventas con FEFO
 

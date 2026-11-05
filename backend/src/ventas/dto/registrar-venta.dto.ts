@@ -1,5 +1,13 @@
 import { Type } from "class-transformer";
-import { ArrayMaxSize, ArrayNotEmpty, IsArray, IsInt, Min, ValidateNested } from "class-validator";
+import {
+  ArrayMaxSize,
+  ArrayNotEmpty,
+  IsArray,
+  IsInt,
+  IsOptional,
+  Min,
+  ValidateNested,
+} from "class-validator";
 
 export class ItemVentaDto {
   @IsInt()
@@ -17,4 +25,9 @@ export class RegistrarVentaDto {
   @ValidateNested({ each: true })
   @Type(() => ItemVentaDto)
   items: ItemVentaDto[];
+
+  // Opcional: cliente registrado del mismo negocio (para su historial de compras)
+  @IsOptional()
+  @IsInt()
+  clienteId?: number;
 }

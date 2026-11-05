@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { api, mensajeDe } from '../api'
 import BuscadorProducto from '../componentes/BuscadorProducto.tsx'
+import ElegirCliente from '../componentes/ElegirCliente.tsx'
 import { fecha, soles } from '../formato'
-import type { Producto, Venta as VentaRegistrada } from '../tipos'
+import type { Cliente, Producto, Venta as VentaRegistrada } from '../tipos'
 
 interface Linea {
   producto: Producto
@@ -14,6 +15,7 @@ export default function Venta() {
   const [error, setError] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [registrada, setRegistrada] = useState<VentaRegistrada | null>(null)
+  const [cliente, setCliente] = useState<Cliente | null>(null)
 
   // Elegir (o escanear) un producto que ya está en la lista suma una unidad más
   function agregar(producto: Producto) {
@@ -41,10 +43,14 @@ export default function Venta() {
     try {
       const venta = await api<VentaRegistrada>('/ventas', {
         metodo: 'POST',
-        cuerpo: { items: lineas.map((l) => ({ productoId: l.producto.id, cantidad: l.cantidad })) },
+        cuerpo: {
+          items: lineas.map((l) => ({ productoId: l.producto.id, cantidad: l.cantidad })),
+          ...(cliente ? { clienteId: cliente.id } : {}),
+        },
       })
       setRegistrada(venta)
       setLineas([])
+      setCliente(null)
     } catch (e) {
       // El servidor tiene la última palabra sobre el stock (otra caja pudo vender mientras tanto)
       setError(mensajeDe(e))
@@ -57,6 +63,11 @@ export default function Venta() {
     return (
       <section className="tarjeta">
         <p className="aviso exito">Venta #{registrada.id} registrada</p>
+        {registrada.cliente && (
+          <p className="tenue">
+            Cliente: <strong>{registrada.cliente.nombre}</strong> · DNI {registrada.cliente.documento}
+          </p>
+        )}
         <p className="total">
           Total <strong>{soles(registrada.total)}</strong>
         </p>
@@ -129,6 +140,9 @@ export default function Venta() {
             ))}
           </ul>
         )}
+
+        <h2 className="subtitulo">Cliente</h2>
+        <ElegirCliente cliente={cliente} alCambiar={setCliente} />
 
         {error && <p className="aviso error">{error}</p>}
 

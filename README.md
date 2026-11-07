@@ -1,6 +1,6 @@
 # Control de inventario y vencimientos para boticas y veterinarias
 
-[![CI](https://github.com/Samira767/botica-inventario-vencimientos/actions/workflows/ci.yml/badge.svg)](https://github.com/Samira767/botica-inventario-vencimientos/actions/workflows/ci.yml)
+[![CI](https://github.com/Ivan08v/Botica-Software/actions/workflows/ci.yml/badge.svg)](https://github.com/Ivan08v/Botica-Software/actions/workflows/ci.yml)
 
 Sistema web para que un negocio pequeño sepa qué tiene en stock, qué está por vencer y cuánto dinero puede perder si no lo vende a tiempo. Pensado para boticas y veterinarias independientes de Huacho (Perú), y para usarse desde el celular en el mostrador.
 

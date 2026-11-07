@@ -4,41 +4,29 @@ import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import * as XLSX from 'xlsx'
 
-export type Formato = 'excel' | 'pdf'
-
-// Cómo se muestra cada columna: el tipo decide el formato en Excel y la alineación en el PDF
-export interface Columna {
-  titulo: string
-  tipo?: 'texto' | 'entero' | 'soles' | 'fecha'
-  ancho?: number // en caracteres, para Excel
-}
-
-export interface Reporte {
-  titulo: string
-  negocio: string
-  // Líneas bajo el título, por ejemplo el período o la fecha de corte
-  detalle: string
-  resumen: [string, string][]
-  columnas: Columna[]
-  filas: (string | number | null)[][]
-  nombreArchivo: string // sin extensión
-}
+// Un reporte es un objeto { titulo, negocio, detalle, resumen, columnas, filas, nombreArchivo }:
+// - detalle: líneas bajo el título, por ejemplo el período o la fecha de corte
+// - resumen: pares [etiqueta, valor]
+// - columnas: { titulo, tipo, ancho }, donde tipo es 'texto' | 'entero' | 'soles' | 'fecha' y decide
+//   el formato en Excel y la alineación en el PDF; ancho va en caracteres, para Excel
+// - filas: arreglos de texto, número o null, en el orden de las columnas
+// - nombreArchivo: sin extensión
 
 // "2027-03-15" -> número de días que usa Excel para las fechas, sin pasar por zonas horarias
-function fechaExcel(fecha: string): number {
+function fechaExcel(fecha) {
   const [anio, mes, dia] = fecha.split('-').map(Number)
   return (Date.UTC(anio, mes - 1, dia) - Date.UTC(1899, 11, 30)) / 86_400_000
 }
 
-const fechaTexto = (fecha: string) => fecha.split('-').reverse().join('/')
-const soles = (valor: number) => valor.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+const fechaTexto = (fecha) => fecha.split('-').reverse().join('/')
+const soles = (valor) => valor.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
-export function generar(reporte: Reporte, formato: Formato) {
+export function generar(reporte, formato) {
   if (formato === 'excel') generarExcel(reporte)
   else generarPdf(reporte)
 }
 
-function generarExcel(r: Reporte) {
+function generarExcel(r) {
   const encabezado = [[r.titulo], [r.negocio], [r.detalle], [], ...r.resumen, []]
   const inicioTabla = encabezado.length
   const hoja = XLSX.utils.aoa_to_sheet([...encabezado, r.columnas.map((c) => c.titulo)])
@@ -74,7 +62,7 @@ function generarExcel(r: Reporte) {
   XLSX.writeFile(libro, `${r.nombreArchivo}.xlsx`)
 }
 
-function generarPdf(r: Reporte) {
+function generarPdf(r) {
   // compress: sin esto el PDF pesa varias veces más (el texto va sin comprimir)
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4', compress: true })
   const margen = 12
@@ -93,7 +81,7 @@ function generarPdf(r: Reporte) {
     maxWidth: 297 - margen * 2,
   })
 
-  const alinear = (c: Columna) => (c.tipo === 'soles' || c.tipo === 'entero' ? 'right' : 'left')
+  const alinear = (c) => (c.tipo === 'soles' || c.tipo === 'entero' ? 'right' : 'left')
   autoTable(doc, {
     startY: 35,
     margin: { left: margen, right: margen, bottom: 14 },

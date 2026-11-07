@@ -28,7 +28,7 @@ No es un sistema de caja ni emite comprobantes electrónicos: es un complemento 
 | Parte | Stack |
 | --- | --- |
 | [backend/](backend/) | NestJS, TypeScript, Prisma 7, PostgreSQL 16, JWT, Jest |
-| [frontend/](frontend/) | React 19, Vite, TypeScript, React Router, barcode-detector (ZXing en WebAssembly), SheetJS, jsPDF |
+| [frontend/](frontend/) | React 19 (JavaScript, `.jsx`), Vite, React Router, barcode-detector (ZXing en WebAssembly), SheetJS, jsPDF |
 
 ## Decisiones técnicas
 

@@ -1,30 +1,17 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
-import type { FormEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { api, mensajeDe } from '../api'
 import { soles } from '../formato'
-import { useSesion } from '../sesion.tsx'
-import type { Producto } from '../tipos'
+import { useSesion } from '../sesion.jsx'
+import Paginador from '../componentes/Paginador.jsx'
+import { usePaginacion } from '../componentes/usePaginacion.js'
 
-const Escaner = lazy(() => import('../componentes/Escaner.tsx'))
+const Escaner = lazy(() => import('../componentes/Escaner.jsx'))
 
 const VACIO = { nombre: '', laboratorio: '', presentacion: '', codigoBarras: '', precioVenta: '', stockMinimo: '0' }
-type Campos = typeof VACIO
-
 // Formulario para crear o editar. `producto` es null cuando se crea uno nuevo.
-function Formulario({
-  producto,
-  codigoInicial,
-  alGuardar,
-  alCancelar,
-}: {
-  producto: Producto | null
-  // Código de barras escaneado en otra pantalla, para un producto nuevo
-  codigoInicial?: string
-  alGuardar: () => void
-  alCancelar: () => void
-}) {
-  const [campos, setCampos] = useState<Campos>(
+function Formulario({ producto, codigoInicial, alGuardar, alCancelar }) {
+  const [campos, setCampos] = useState(
     producto
       ? {
           nombre: producto.nombre,
@@ -40,10 +27,9 @@ function Formulario({
   const [error, setError] = useState('')
   const [enviando, setEnviando] = useState(false)
 
-  const cambiar = (campo: keyof Campos) => (e: { target: { value: string } }) =>
-    setCampos({ ...campos, [campo]: e.target.value })
+  const cambiar = (campo) => (e) => setCampos({ ...campos, [campo]: e.target.value })
 
-  async function alEnviar(evento: FormEvent) {
+  async function alEnviar(evento) {
     evento.preventDefault()
     setError('')
     setEnviando(true)
@@ -71,7 +57,13 @@ function Formulario({
       <h2>{producto ? 'Editar producto' : 'Nuevo producto'}</h2>
       <label>
         Nombre
-        <input required maxLength={150} value={campos.nombre} onChange={cambiar('nombre')} placeholder="Paracetamol 500 mg" />
+        <input
+          required
+          maxLength={150}
+          value={campos.nombre}
+          onChange={cambiar('nombre')}
+          placeholder="Paracetamol 500 mg"
+        />
       </label>
       <div className="dos-columnas">
         <label>
@@ -80,7 +72,12 @@ function Formulario({
         </label>
         <label>
           Presentación
-          <input maxLength={100} value={campos.presentacion} onChange={cambiar('presentacion')} placeholder="Caja x 100 tabletas" />
+          <input
+            maxLength={100}
+            value={campos.presentacion}
+            onChange={cambiar('presentacion')}
+            placeholder="Caja x 100 tabletas"
+          />
         </label>
       </div>
       {/* El botón va fuera de la etiqueta: dentro, un lector de pantalla lo leería como parte del nombre del campo */}
@@ -102,13 +99,13 @@ function Formulario({
       </div>
       {escaneando && (
         <Suspense fallback={<p className="tenue">Abriendo cámara…</p>}>
-        <Escaner
-          alLeer={(codigo) => {
-            setCampos((c) => ({ ...c, codigoBarras: codigo }))
-            setEscaneando(false)
-          }}
-          alCerrar={() => setEscaneando(false)}
-        />
+          <Escaner
+            alLeer={(codigo) => {
+              setCampos((c) => ({ ...c, codigoBarras: codigo }))
+              setEscaneando(false)
+            }}
+            alCerrar={() => setEscaneando(false)}
+          />
         </Suspense>
       )}
       <div className="dos-columnas">
@@ -155,15 +152,14 @@ export default function Productos() {
   const { sesion } = useSesion()
   const esDueno = sesion?.usuario.rol === 'DUENO'
   const [buscar, setBuscar] = useState('')
-  const [productos, setProductos] = useState<Producto[] | null>(null)
+  const [productos, setProductos] = useState(null)
   const [error, setError] = useState('')
+  const paginacion = usePaginacion(productos ?? [], buscar)
   // undefined: formulario cerrado; null: creando; Producto: editando ese
   // Si se llega desde un escaneo sin resultado, se abre directo el formulario con ese código
   const navegar = useNavigate()
-  const origen = useLocation().state as { codigoNuevo?: string; volverA?: string } | null
-  const [editando, setEditando] = useState<Producto | null | undefined>(
-    origen?.codigoNuevo && esDueno ? null : undefined,
-  )
+  const origen = useLocation().state
+  const [editando, setEditando] = useState(origen?.codigoNuevo && esDueno ? null : undefined)
 
   // Al terminar se regresa a la pantalla desde la que se escaneó (venta o ingreso), si la hubo
   function cerrarFormulario() {
@@ -171,9 +167,9 @@ export default function Productos() {
     else setEditando(undefined)
   }
 
-  const cargar = useCallback(async (texto: string) => {
+  const cargar = useCallback(async (texto) => {
     try {
-      setProductos(await api<Producto[]>(`/productos?buscar=${encodeURIComponent(texto.trim())}`))
+      setProductos(await api(`/productos?buscar=${encodeURIComponent(texto.trim())}`))
       setError('')
     } catch (e) {
       setError(mensajeDe(e))
@@ -185,7 +181,7 @@ export default function Productos() {
     return () => clearTimeout(espera)
   }, [buscar, cargar])
 
-  async function desactivar(producto: Producto) {
+  async function desactivar(producto) {
     if (!window.confirm(`¿Desactivar "${producto.nombre}"? Dejará de aparecer en ventas e ingresos.`)) return
     try {
       await api(`/productos/${producto.id}`, { metodo: 'DELETE' })
@@ -238,33 +234,38 @@ export default function Productos() {
       ) : productos.length === 0 ? (
         <p className="tenue">No se encontraron productos.</p>
       ) : (
-        <ul className="lista">
-          {productos.map((p) => (
-            <li key={p.id}>
-              <span>
-                <strong>{p.nombre}</strong>
-                <span className="tenue">{[p.presentacion, p.laboratorio, p.codigoBarras].filter(Boolean).join(' · ')}</span>
+        <>
+          <ul className="lista">
+            {paginacion.visibles.map((p) => (
+              <li key={p.id}>
                 <span>
-                  {soles(p.precioVenta)}
-                  <span className={p.stockBajo ? 'etiqueta rojo' : 'etiqueta'}>
-                    Stock {p.stock}
-                    {p.stockBajo && ` (mínimo ${p.stockMinimo})`}
+                  <strong>{p.nombre}</strong>
+                  <span className="tenue">
+                    {[p.presentacion, p.laboratorio, p.codigoBarras].filter(Boolean).join(' · ')}
+                  </span>
+                  <span>
+                    {soles(p.precioVenta)}
+                    <span className={p.stockBajo ? 'etiqueta rojo' : 'etiqueta'}>
+                      Stock {p.stock}
+                      {p.stockBajo && ` (mínimo ${p.stockMinimo})`}
+                    </span>
                   </span>
                 </span>
-              </span>
-              {esDueno && (
-                <span className="fila">
-                  <button className="boton secundario chico" onClick={() => setEditando(p)}>
-                    Editar
-                  </button>
-                  <button className="boton secundario chico peligro" onClick={() => desactivar(p)}>
-                    Desactivar
-                  </button>
-                </span>
-              )}
-            </li>
-          ))}
-        </ul>
+                {esDueno && (
+                  <span className="fila">
+                    <button className="boton secundario chico" onClick={() => setEditando(p)}>
+                      Editar
+                    </button>
+                    <button className="boton secundario chico peligro" onClick={() => desactivar(p)}>
+                      Desactivar
+                    </button>
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+          <Paginador {...paginacion} />
+        </>
       )}
     </section>
   )

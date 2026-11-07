@@ -1,6 +1,6 @@
 # Botica – Frontend
 
-Aplicación web del sistema de inventario y vencimientos. React 19 + Vite + TypeScript, diseñada primero para celular.
+Aplicación web del sistema de inventario y vencimientos. React 19 + Vite en JavaScript (componentes `.jsx`), diseñada primero para celular.
 
 ## Puesta en marcha
 
@@ -21,7 +21,7 @@ npm run dev:celular
 
 Vite muestra una dirección `Network`, por ejemplo `https://192.168.1.106:5173`. Ábrela en el celular y acepta la advertencia de seguridad: el certificado es local y autofirmado. Va con `https` porque los navegadores solo prestan la cámara en páginas seguras.
 
-En desarrollo no hay que configurar nada: Vite reenvía las llamadas a `/api` hacia el backend ([vite.config.ts](vite.config.ts)). En producción se define `VITE_API_URL` con la URL pública del backend (ver [.env.example](.env.example)).
+En desarrollo no hay que configurar nada: Vite reenvía las llamadas a `/api` hacia el backend ([vite.config.js](vite.config.js)). En producción se define `VITE_API_URL` con la URL pública del backend (ver [.env.example](.env.example)).
 
 ## Pantallas
 
@@ -38,11 +38,11 @@ En desarrollo no hay que configurar nada: Vite reenvía las llamadas a `/api` ha
 
 | Archivo | Contenido |
 | --- | --- |
-| [src/api.ts](src/api.ts) | Única función que habla con el backend: agrega el token y convierte los errores |
-| [src/archivos.ts](src/archivos.ts) | Arma los reportes en Excel (SheetJS) o PDF (jsPDF) en el navegador |
-| [src/excel.ts](src/excel.ts) | Lee el Excel en el navegador con SheetJS y genera la plantilla |
-| [src/sesion.tsx](src/sesion.tsx) | Quién inició sesión (contexto de React + `localStorage`) |
-| [src/App.tsx](src/App.tsx) | Rutas según el rol |
+| [src/api.js](src/api.js) | Única función que habla con el backend: agrega el token y convierte los errores |
+| [src/archivos.js](src/archivos.js) | Arma los reportes en Excel (SheetJS) o PDF (jsPDF) en el navegador |
+| [src/excel.js](src/excel.js) | Lee el Excel en el navegador con SheetJS y genera la plantilla |
+| [src/sesion.jsx](src/sesion.jsx) | Quién inició sesión (contexto de React + `localStorage`) |
+| [src/App.jsx](src/App.jsx) | Rutas según el rol |
 | [src/paginas/](src/paginas/) | Una pantalla por archivo |
 | [src/componentes/](src/componentes/) | Marco con el menú, buscador de productos y escáner |
 
@@ -59,5 +59,5 @@ En desarrollo no hay que configurar nada: Vite reenvía las llamadas a `/api` ha
 | --- | --- |
 | `npm run dev` | Servidor de desarrollo con recarga al guardar |
 | `npm run dev:celular` | Igual, pero visible en la red Wi-Fi y con https, para probar desde el celular |
-| `npm run build` | Revisa tipos y genera `dist/` para publicar |
+| `npm run build` | Genera `dist/` para publicar |
 | `npm run lint` | Revisa el código con oxlint |

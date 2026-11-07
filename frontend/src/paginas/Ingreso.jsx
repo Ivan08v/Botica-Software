@@ -1,30 +1,27 @@
 import { useState } from 'react'
-import type { FormEvent } from 'react'
 import { api, mensajeDe } from '../api'
-import BuscadorProducto from '../componentes/BuscadorProducto.tsx'
+import BuscadorProducto from '../componentes/BuscadorProducto.jsx'
 import { fecha } from '../formato'
-import type { Lote, Producto } from '../tipos'
 
 const VACIO = { numeroLote: '', fechaVencimiento: '', cantidad: '', costoUnitario: '' }
 
 // Ingreso de mercadería: se elige el producto y se registra el lote que llegó
 export default function Ingreso() {
-  const [producto, setProducto] = useState<Producto | null>(null)
+  const [producto, setProducto] = useState(null)
   const [campos, setCampos] = useState(VACIO)
   const [error, setError] = useState('')
   const [exito, setExito] = useState('')
   const [enviando, setEnviando] = useState(false)
 
-  const cambiar = (campo: keyof typeof VACIO) => (e: { target: { value: string } }) =>
-    setCampos({ ...campos, [campo]: e.target.value })
+  const cambiar = (campo) => (e) => setCampos({ ...campos, [campo]: e.target.value })
 
-  async function alEnviar(evento: FormEvent) {
+  async function alEnviar(evento) {
     evento.preventDefault()
     if (!producto) return
     setError('')
     setEnviando(true)
     try {
-      const lote = await api<Lote>('/lotes', {
+      const lote = await api('/lotes', {
         metodo: 'POST',
         cuerpo: {
           productoId: producto.id,

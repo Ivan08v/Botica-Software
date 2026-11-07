@@ -1,41 +1,9 @@
 import { useState } from 'react'
-import type { ChangeEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { api, mensajeDe } from '../api'
-import type { FilaExcel } from '../excel'
-
-type Estado = 'OK' | 'OMITIDA' | 'ERROR'
-
-interface FilaAnalizada {
-  fila: number
-  estado: Estado
-  errores: string[]
-  avisos: string[]
-  nombre: string
-  numeroLote: string
-}
-
-interface VistaPrevia {
-  filas: FilaAnalizada[]
-  resumen: {
-    total: number
-    correctas: number
-    omitidas: number
-    conError: number
-    productosNuevos: number
-    lotesNuevos: number
-    unidades: number
-  }
-}
-
-interface Importado {
-  importado: { productos: number; lotes: number; unidades: number }
-  omitidas: number
-  conError: number
-}
 
 const MAXIMO_DETALLE = 200
-const ETIQUETA: Record<Estado, { texto: string; clase: string }> = {
+const ETIQUETA = {
   ERROR: { texto: 'Error', clase: 'rojo' },
   OMITIDA: { texto: 'Se omite', clase: '' },
   OK: { texto: 'Aviso', clase: 'amarillo' },
@@ -44,13 +12,13 @@ const ETIQUETA: Record<Estado, { texto: string; clase: string }> = {
 // Importar inventario desde Excel en tres pasos: elegir archivo, revisar la vista previa y confirmar
 export default function Importar() {
   const [archivo, setArchivo] = useState('')
-  const [filas, setFilas] = useState<FilaExcel[]>([])
-  const [previa, setPrevia] = useState<VistaPrevia | null>(null)
-  const [hecho, setHecho] = useState<Importado | null>(null)
+  const [filas, setFilas] = useState([])
+  const [previa, setPrevia] = useState(null)
+  const [hecho, setHecho] = useState(null)
   const [error, setError] = useState('')
   const [ocupado, setOcupado] = useState(false)
 
-  async function alElegirArchivo(evento: ChangeEvent<HTMLInputElement>) {
+  async function alElegirArchivo(evento) {
     const elegido = evento.target.files?.[0]
     // Permite volver a elegir el mismo archivo después de corregirlo
     evento.target.value = ''
@@ -62,7 +30,7 @@ export default function Importar() {
     try {
       const { leerInventario } = await import('../excel')
       const leido = await leerInventario(elegido)
-      const respuesta = await api<VistaPrevia>('/importacion/vista-previa', {
+      const respuesta = await api('/importacion/vista-previa', {
         metodo: 'POST',
         cuerpo: { filas: leido.filas },
       })
@@ -83,7 +51,7 @@ export default function Importar() {
     setError('')
     setOcupado(true)
     try {
-      setHecho(await api<Importado>('/importacion/confirmar', { metodo: 'POST', cuerpo: { filas } }))
+      setHecho(await api('/importacion/confirmar', { metodo: 'POST', cuerpo: { filas } }))
       setPrevia(null)
     } catch (e) {
       setError(mensajeDe(e))
@@ -98,7 +66,7 @@ export default function Importar() {
   }
 
   // Solo se detallan las filas que necesitan atención: errores primero, luego omitidas y avisos
-  const orden: Estado[] = ['ERROR', 'OMITIDA', 'OK']
+  const orden = ['ERROR', 'OMITIDA', 'OK']
   const conNovedad = (previa?.filas ?? [])
     .filter((f) => f.estado !== 'OK' || f.avisos.length > 0)
     .sort((a, b) => orden.indexOf(a.estado) - orden.indexOf(b.estado) || a.fila - b.fila)
@@ -124,7 +92,11 @@ export default function Importar() {
         </ol>
 
         <label className="boton archivo">
-          {ocupado && !previa ? 'Leyendo archivo…' : previa || hecho ? 'Elegir otro archivo' : 'Elegir archivo de Excel'}
+          {ocupado && !previa
+            ? 'Leyendo archivo…'
+            : previa || hecho
+              ? 'Elegir otro archivo'
+              : 'Elegir archivo de Excel'}
           <input type="file" accept=".xlsx,.xls" onChange={alElegirArchivo} disabled={ocupado} />
         </label>
         {error && <p className="aviso error">{error}</p>}
@@ -160,8 +132,8 @@ export default function Importar() {
           </div>
           <p>
             Al confirmar se crearán <strong>{previa.resumen.productosNuevos}</strong> productos y{' '}
-            <strong>{previa.resumen.lotesNuevos}</strong> lotes, con <strong>{previa.resumen.unidades}</strong>{' '}
-            unidades en total.
+            <strong>{previa.resumen.lotesNuevos}</strong> lotes, con <strong>{previa.resumen.unidades}</strong> unidades
+            en total.
           </p>
 
           {conNovedad.length > 0 && (
@@ -176,7 +148,9 @@ export default function Importar() {
                         <span className={`etiqueta ${ETIQUETA[f.estado].clase}`}>{ETIQUETA[f.estado].texto}</span>
                       </span>
                       <span className="tenue">
-                        {[f.nombre || '(sin nombre)', f.numeroLote && `lote ${f.numeroLote}`].filter(Boolean).join(' · ')}
+                        {[f.nombre || '(sin nombre)', f.numeroLote && `lote ${f.numeroLote}`]
+                          .filter(Boolean)
+                          .join(' · ')}
                       </span>
                       {[...f.errores, ...f.avisos].map((mensaje) => (
                         <span key={mensaje}>{mensaje}</span>
@@ -210,7 +184,7 @@ export default function Importar() {
   )
 }
 
-function Dato({ titulo, valor, clase = '' }: { titulo: string; valor: number; clase?: string }) {
+function Dato({ titulo, valor, clase = '' }) {
   return (
     <div className={`tramo dato ${clase}`}>
       <span>{titulo}</span>

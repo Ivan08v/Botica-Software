@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import type { FormEvent } from 'react'
 import { mensajeDe } from '../api'
-import { useSesion } from '../sesion.tsx'
+import { useSesion } from '../sesion.jsx'
 
 export default function Login() {
   const { entrar } = useSesion()
@@ -10,7 +9,7 @@ export default function Login() {
   const [error, setError] = useState('')
   const [enviando, setEnviando] = useState(false)
 
-  async function alEnviar(evento: FormEvent) {
+  async function alEnviar(evento) {
     evento.preventDefault()
     setError('')
     setEnviando(true)

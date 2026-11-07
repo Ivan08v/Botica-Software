@@ -1,6 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { useSesion } from '../sesion.tsx'
-import AvisoAlertas from './AvisoAlertas.tsx'
+import { useSesion } from '../sesion.jsx'
+import AvisoAlertas from './AvisoAlertas.jsx'
 
 // Encabezado y menú comunes a todas las pantallas. En celular el menú queda fijo abajo.
 export default function Marco() {

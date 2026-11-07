@@ -91,5 +91,5 @@ jobs:
       - name: Linter
         run: npm run lint
 
-      - name: Revisar tipos y compilar
+      - name: Compilar
         run: npm run build

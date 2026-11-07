@@ -1,20 +1,24 @@
 import { useEffect, useState } from 'react'
 import { api, mensajeDe } from '../api'
 import { fecha, fechaHora, soles } from '../formato'
-import type { Cliente, FichaCliente } from '../tipos'
+import Paginador from '../componentes/Paginador.jsx'
+import { usePaginacion } from '../componentes/usePaginacion.js'
 
 // Atención al cliente: buscar por DNI o nombre y ver qué compró antes,
 // para atender más rápido a quien vuelve (ej. tratamientos continuos).
 export default function Clientes() {
   const [texto, setTexto] = useState('')
-  const [lista, setLista] = useState<Cliente[]>([])
-  const [ficha, setFicha] = useState<FichaCliente | null>(null)
+  const [lista, setLista] = useState([])
+  const [ficha, setFicha] = useState(null)
   const [error, setError] = useState('')
+  const paginacion = usePaginacion(lista, texto)
+  // El historial vuelve a la página 1 al abrir otro cliente
+  const paginacionVentas = usePaginacion(ficha?.ventas ?? [], ficha?.id)
 
   useEffect(() => {
     let vigente = true
     const espera = setTimeout(() => {
-      api<Cliente[]>(`/clientes?buscar=${encodeURIComponent(texto.trim())}`)
+      api(`/clientes?buscar=${encodeURIComponent(texto.trim())}`)
         .then((r) => vigente && setLista(r))
         .catch((e) => vigente && setError(mensajeDe(e)))
     }, 250)
@@ -24,10 +28,10 @@ export default function Clientes() {
     }
   }, [texto])
 
-  async function abrir(id: number) {
+  async function abrir(id) {
     setError('')
     try {
-      setFicha(await api<FichaCliente>(`/clientes/${id}`))
+      setFicha(await api(`/clientes/${id}`))
     } catch (e) {
       setError(mensajeDe(e))
     }
@@ -65,21 +69,22 @@ export default function Clientes() {
         {ficha.ventas.length === 0 ? (
           <p className="tenue">Todavía no tiene compras registradas.</p>
         ) : (
-          <ul className="lista">
-            {ficha.ventas.map((v) => (
-              <li key={v.id}>
-                <span>
-                  <strong>
-                    Venta #{v.id} · {fechaHora(v.fecha)}
-                  </strong>
-                  <span className="tenue">
-                    {v.productos.map((p) => `${p.cantidad} × ${p.nombre}`).join(', ')}
+          <>
+            <ul className="lista">
+              {paginacionVentas.visibles.map((v) => (
+                <li key={v.id}>
+                  <span>
+                    <strong>
+                      Venta #{v.id} · {fechaHora(v.fecha)}
+                    </strong>
+                    <span className="tenue">{v.productos.map((p) => `${p.cantidad} × ${p.nombre}`).join(', ')}</span>
                   </span>
-                </span>
-                <span>{soles(v.total)}</span>
-              </li>
-            ))}
-          </ul>
+                  <span>{soles(v.total)}</span>
+                </li>
+              ))}
+            </ul>
+            <Paginador {...paginacionVentas} />
+          </>
         )}
       </section>
     )
@@ -98,25 +103,30 @@ export default function Clientes() {
       {error && <p className="aviso error">{error}</p>}
       {lista.length === 0 ? (
         <p className="tenue espacio-arriba">
-          {texto.trim() ? 'No se encontraron clientes.' : 'Aún no hay clientes. Se registran desde la venta, con su DNI.'}
+          {texto.trim()
+            ? 'No se encontraron clientes.'
+            : 'Aún no hay clientes. Se registran desde la venta, con su DNI.'}
         </p>
       ) : (
-        <ul className="resultados">
-          {lista.map((c) => (
-            <li key={c.id}>
-              <button type="button" onClick={() => abrir(c.id)}>
-                <span>
-                  <strong>{c.nombre}</strong>
-                  <span className="tenue">
-                    DNI {c.documento}
-                    {c.telefono && ` · ${c.telefono}`}
+        <>
+          <ul className="resultados">
+            {paginacion.visibles.map((c) => (
+              <li key={c.id}>
+                <button type="button" onClick={() => abrir(c.id)}>
+                  <span>
+                    <strong>{c.nombre}</strong>
+                    <span className="tenue">
+                      DNI {c.documento}
+                      {c.telefono && ` · ${c.telefono}`}
+                    </span>
                   </span>
-                </span>
-                <span className="etiqueta">Ver historial</span>
-              </button>
-            </li>
-          ))}
-        </ul>
+                  <span className="etiqueta">Ver historial</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+          <Paginador {...paginacion} />
+        </>
       )}
     </section>
   )

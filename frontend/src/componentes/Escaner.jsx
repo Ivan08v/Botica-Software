@@ -1,13 +1,12 @@
 import { BarcodeDetector, prepareZXingModule } from 'barcode-detector/ponyfill'
 import { useEffect, useRef, useState } from 'react'
-import type { FormEvent } from 'react'
 import urlWasm from 'zxing-wasm/reader/zxing_reader.wasm?url'
 
 // El motor de lectura (ZXing, compilado a WebAssembly) se sirve desde nuestra propia app
 // en vez de descargarse de un CDN externo: así el escáner no depende de terceros.
 prepareZXingModule({
   overrides: {
-    locateFile: (ruta: string, prefijo: string) => (ruta.endsWith('.wasm') ? urlWasm : prefijo + ruta),
+    locateFile: (ruta, prefijo) => (ruta.endsWith('.wasm') ? urlWasm : prefijo + ruta),
   },
 })
 
@@ -19,8 +18,8 @@ const MS_ENTRE_LECTURAS = 150
 // Lee códigos de barras con la cámara del celular o de la laptop.
 // Cada lectura analiza el cuadro completo de la cámara a su resolución real: las barras
 // de un código son muy finas y se pierden si la imagen se reduce antes de analizarla.
-export default function Escaner({ alLeer, alCerrar }: { alLeer: (codigo: string) => void; alCerrar: () => void }) {
-  const video = useRef<HTMLVideoElement>(null)
+export default function Escaner({ alLeer, alCerrar }) {
+  const video = useRef(null)
   const [error, setError] = useState('')
   const [manual, setManual] = useState('')
   const alLeerRef = useRef(alLeer)
@@ -30,8 +29,8 @@ export default function Escaner({ alLeer, alCerrar }: { alLeer: (codigo: string)
 
   useEffect(() => {
     let cancelado = false
-    let camara: MediaStream | undefined
-    let espera: ReturnType<typeof setTimeout> | undefined
+    let camara
+    let espera
 
     async function leer() {
       if (cancelado || !video.current) return
@@ -85,7 +84,7 @@ export default function Escaner({ alLeer, alCerrar }: { alLeer: (codigo: string)
     }
   }, [])
 
-  function enviarManual(evento: FormEvent) {
+  function enviarManual(evento) {
     evento.preventDefault()
     evento.stopPropagation()
     if (manual.trim()) alLeer(manual.trim())
@@ -101,8 +100,8 @@ export default function Escaner({ alLeer, alCerrar }: { alLeer: (codigo: string)
             <video ref={video} muted playsInline aria-label="Vista de la cámara" />
           </div>
           <p className="tenue">
-            Acerca el código a la línea, con buena luz y sin reflejos. Si se ve borroso, aléjalo un poco: las cámaras
-            de laptop no enfocan de cerca.
+            Acerca el código a la línea, con buena luz y sin reflejos. Si se ve borroso, aléjalo un poco: las cámaras de
+            laptop no enfocan de cerca.
           </p>
         </>
       )}

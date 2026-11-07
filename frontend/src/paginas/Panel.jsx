@@ -1,44 +1,50 @@
 import { useEffect, useState } from 'react'
 import { api, mensajeDe } from '../api'
 import { fecha, soles } from '../formato'
-import type { Panel as DatosPanel, ResumenTramo, Tramo } from '../tipos'
+import Paginador from '../componentes/Paginador.jsx'
+import { usePaginacion } from '../componentes/usePaginacion.js'
 
-const TRAMOS: { tramo: Tramo; titulo: string; clase: string }[] = [
+const TRAMOS = [
   { tramo: 'VENCIDO', titulo: 'Vencidos', clase: 'vencido' },
   { tramo: 'DIAS_30', titulo: 'Vence en 30 días', clase: 'rojo' },
   { tramo: 'DIAS_60', titulo: 'Vence en 31 a 60 días', clase: 'ambar' },
   { tramo: 'DIAS_90', titulo: 'Vence en 61 a 90 días', clase: 'amarillo' },
 ]
 
-function textoDias(dias: number): string {
+function textoDias(dias) {
   if (dias < 0) return `Venció hace ${-dias} ${dias === -1 ? 'día' : 'días'}`
   if (dias === 0) return 'Vence hoy'
   return `Faltan ${dias} ${dias === 1 ? 'día' : 'días'}`
 }
 
 export default function Panel() {
-  const [datos, setDatos] = useState<DatosPanel | null>(null)
+  const [datos, setDatos] = useState(null)
   const [error, setError] = useState('')
   // Tramo elegido para filtrar la lista; null muestra todos
-  const [filtro, setFiltro] = useState<Tramo | null>(null)
+  const [filtro, setFiltro] = useState(null)
 
   useEffect(() => {
-    api<DatosPanel>('/panel')
+    api('/panel')
       .then(setDatos)
       .catch((e) => setError(mensajeDe(e)))
   }, [])
 
+  const todosLosLotes = datos?.lotesPorVencer ?? []
+  const lotes = filtro ? todosLosLotes.filter((l) => l.tramo === filtro) : todosLosLotes
+  // Al cambiar de tramo se vuelve a la página 1
+  const paginaLotes = usePaginacion(lotes, filtro)
+  const paginaStockBajo = usePaginacion(datos?.productosStockBajo ?? [])
+
   if (error) return <p className="aviso error">{error}</p>
   if (!datos) return <p className="tenue">Cargando panel…</p>
 
-  const resumen: Record<Tramo, ResumenTramo> = {
+  const resumen = {
     VENCIDO: datos.vencimientos.vencidos,
     DIAS_30: datos.vencimientos.en30Dias,
     DIAS_60: datos.vencimientos.en60Dias,
     DIAS_90: datos.vencimientos.en90Dias,
   }
-  const lotes = filtro ? datos.lotesPorVencer.filter((l) => l.tramo === filtro) : datos.lotesPorVencer
-  const claseDe = (tramo: Tramo) => TRAMOS.find((t) => t.tramo === tramo)!.clase
+  const claseDe = (tramo) => TRAMOS.find((t) => t.tramo === tramo).clase
 
   return (
     <>
@@ -95,11 +101,13 @@ export default function Panel() {
                 </tr>
               </thead>
               <tbody>
-                {lotes.map((l) => (
+                {paginaLotes.visibles.map((l) => (
                   <tr key={l.loteId}>
                     <td>
                       <strong>{l.producto}</strong>
-                      <span className="tenue">{[l.presentacion, `Lote ${l.numeroLote}`].filter(Boolean).join(' · ')}</span>
+                      <span className="tenue">
+                        {[l.presentacion, `Lote ${l.numeroLote}`].filter(Boolean).join(' · ')}
+                      </span>
                     </td>
                     <td>
                       {fecha(l.fechaVencimiento)}
@@ -114,6 +122,7 @@ export default function Panel() {
                 ))}
               </tbody>
             </table>
+            <Paginador {...paginaLotes} />
           </div>
         )}
       </section>
@@ -134,7 +143,7 @@ export default function Panel() {
                 </tr>
               </thead>
               <tbody>
-                {datos.productosStockBajo.map((p) => (
+                {paginaStockBajo.visibles.map((p) => (
                   <tr key={p.productoId}>
                     <td>
                       <strong>{p.producto}</strong>
@@ -149,6 +158,7 @@ export default function Panel() {
                 ))}
               </tbody>
             </table>
+            <Paginador {...paginaStockBajo} />
           </div>
         )}
       </section>

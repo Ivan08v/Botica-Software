@@ -1,17 +1,16 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { api, ErrorApi, mensajeDe } from '../api'
-import { useSesion } from '../sesion.tsx'
-import type { Producto } from '../tipos'
+import { useSesion } from '../sesion.jsx'
 
 // La librería de cámara es pesada: se descarga recién cuando alguien toca "Escanear"
-const Escaner = lazy(() => import('./Escaner.tsx'))
+const Escaner = lazy(() => import('./Escaner.jsx'))
 
 // Busca un producto por nombre, laboratorio o código de barras (escrito o escaneado)
 // y avisa cuál se eligió. Lo usan la venta y el ingreso de mercadería.
-export default function BuscadorProducto({ alElegir }: { alElegir: (producto: Producto) => void }) {
+export default function BuscadorProducto({ alElegir }) {
   const [texto, setTexto] = useState('')
-  const [resultados, setResultados] = useState<Producto[]>([])
+  const [resultados, setResultados] = useState([])
   const [escaneando, setEscaneando] = useState(false)
   const [error, setError] = useState('')
   // Código escaneado que no corresponde a ningún producto del negocio
@@ -27,7 +26,7 @@ export default function BuscadorProducto({ alElegir }: { alElegir: (producto: Pr
     if (limpio.length < 2) return
     let vigente = true
     const espera = setTimeout(() => {
-      api<Producto[]>(`/productos?buscar=${encodeURIComponent(limpio)}`)
+      api(`/productos?buscar=${encodeURIComponent(limpio)}`)
         .then((lista) => {
           if (vigente) setResultados(lista.slice(0, 8))
         })
@@ -42,7 +41,7 @@ export default function BuscadorProducto({ alElegir }: { alElegir: (producto: Pr
   // Con menos de 2 letras no se busca ni se muestran resultados anteriores
   const visibles = texto.trim().length < 2 ? [] : resultados
 
-  function elegir(producto: Producto) {
+  function elegir(producto) {
     setTexto('')
     setResultados([])
     setError('')
@@ -50,12 +49,12 @@ export default function BuscadorProducto({ alElegir }: { alElegir: (producto: Pr
     alElegir(producto)
   }
 
-  async function alLeerCodigo(codigo: string) {
+  async function alLeerCodigo(codigo) {
     setEscaneando(false)
     setError('')
     setSinRegistrar('')
     try {
-      elegir(await api<Producto>(`/productos/codigo/${encodeURIComponent(codigo)}`))
+      elegir(await api(`/productos/codigo/${encodeURIComponent(codigo)}`))
     } catch (e) {
       if (e instanceof ErrorApi && e.estado === 404) setSinRegistrar(codigo)
       else setError(mensajeDe(e))

@@ -1,17 +1,9 @@
 import { useState } from 'react'
-import type { FormEvent } from 'react'
 import { api, ErrorApi, mensajeDe } from '../api'
-import type { Cliente } from '../tipos'
 
 // Cliente opcional de la venta: se busca por DNI y, si no existe, se registra ahí mismo
 // con nombre y teléfono, sin salir de la caja.
-export default function ElegirCliente({
-  cliente,
-  alCambiar,
-}: {
-  cliente: Cliente | null
-  alCambiar: (cliente: Cliente | null) => void
-}) {
+export default function ElegirCliente({ cliente, alCambiar }) {
   const [documento, setDocumento] = useState('')
   const [nuevo, setNuevo] = useState(false)
   const [nombre, setNombre] = useState('')
@@ -19,14 +11,14 @@ export default function ElegirCliente({
   const [error, setError] = useState('')
   const [ocupado, setOcupado] = useState(false)
 
-  async function buscar(e: FormEvent) {
+  async function buscar(e) {
     e.preventDefault()
     const limpio = documento.trim()
     if (!limpio) return
     setError('')
     setOcupado(true)
     try {
-      alCambiar(await api<Cliente>(`/clientes/documento/${encodeURIComponent(limpio)}`))
+      alCambiar(await api(`/clientes/documento/${encodeURIComponent(limpio)}`))
       setDocumento('')
       setNuevo(false)
     } catch (err) {
@@ -38,12 +30,12 @@ export default function ElegirCliente({
     }
   }
 
-  async function registrar(e: FormEvent) {
+  async function registrar(e) {
     e.preventDefault()
     setError('')
     setOcupado(true)
     try {
-      const creado = await api<Cliente>('/clientes', {
+      const creado = await api('/clientes', {
         metodo: 'POST',
         cuerpo: { documento: documento.trim(), nombre, ...(telefono.trim() ? { telefono: telefono.trim() } : {}) },
       })

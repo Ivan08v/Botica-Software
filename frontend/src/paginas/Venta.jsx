@@ -1,24 +1,18 @@
 import { useState } from 'react'
 import { api, mensajeDe } from '../api'
-import BuscadorProducto from '../componentes/BuscadorProducto.tsx'
-import ElegirCliente from '../componentes/ElegirCliente.tsx'
+import BuscadorProducto from '../componentes/BuscadorProducto.jsx'
+import ElegirCliente from '../componentes/ElegirCliente.jsx'
 import { fecha, soles } from '../formato'
-import type { Cliente, Producto, Venta as VentaRegistrada } from '../tipos'
-
-interface Linea {
-  producto: Producto
-  cantidad: number
-}
 
 export default function Venta() {
-  const [lineas, setLineas] = useState<Linea[]>([])
+  const [lineas, setLineas] = useState([])
   const [error, setError] = useState('')
   const [enviando, setEnviando] = useState(false)
-  const [registrada, setRegistrada] = useState<VentaRegistrada | null>(null)
-  const [cliente, setCliente] = useState<Cliente | null>(null)
+  const [registrada, setRegistrada] = useState(null)
+  const [cliente, setCliente] = useState(null)
 
   // Elegir (o escanear) un producto que ya está en la lista suma una unidad más
-  function agregar(producto: Producto) {
+  function agregar(producto) {
     setError('')
     setLineas((actuales) => {
       const existe = actuales.some((l) => l.producto.id === producto.id)
@@ -28,7 +22,7 @@ export default function Venta() {
     })
   }
 
-  function cambiarCantidad(productoId: number, cantidad: number) {
+  function cambiarCantidad(productoId, cantidad) {
     setLineas((actuales) =>
       actuales.map((l) => (l.producto.id === productoId ? { ...l, cantidad: Math.max(1, cantidad || 1) } : l)),
     )
@@ -41,7 +35,7 @@ export default function Venta() {
     setError('')
     setEnviando(true)
     try {
-      const venta = await api<VentaRegistrada>('/ventas', {
+      const venta = await api('/ventas', {
         metodo: 'POST',
         cuerpo: {
           items: lineas.map((l) => ({ productoId: l.producto.id, cantidad: l.cantidad })),
@@ -114,9 +108,7 @@ export default function Venta() {
                   <span className="tenue">
                     {soles(l.producto.precioVenta)} c/u · stock {l.producto.stock}
                   </span>
-                  {l.cantidad > l.producto.stock && (
-                    <span className="etiqueta rojo">Solo hay {l.producto.stock}</span>
-                  )}
+                  {l.cantidad > l.producto.stock && <span className="etiqueta rojo">Solo hay {l.producto.stock}</span>}
                 </span>
                 <span className="fila">
                   <input
@@ -149,7 +141,11 @@ export default function Venta() {
         <p className="total">
           Total <strong>{soles(total)}</strong>
         </p>
-        <button className="boton" disabled={lineas.length === 0 || excedidas.length > 0 || enviando} onClick={registrar}>
+        <button
+          className="boton"
+          disabled={lineas.length === 0 || excedidas.length > 0 || enviando}
+          onClick={registrar}
+        >
           {enviando ? 'Registrando…' : 'Registrar venta'}
         </button>
       </section>

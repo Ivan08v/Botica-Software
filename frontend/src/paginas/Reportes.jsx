@@ -1,55 +1,9 @@
 import { useState } from 'react'
 import { api, mensajeDe } from '../api'
-import type { Formato, Reporte } from '../archivos'
 import { fecha, soles } from '../formato'
-import { useSesion } from '../sesion.tsx'
+import { useSesion } from '../sesion.jsx'
 
-interface Inventario {
-  fecha: string
-  venceEnDias: number | null
-  resumen: {
-    productos: number
-    vigente: { lotes: number; unidades: number; valorCosto: string; valorVenta: string }
-    vencido: { lotes: number; unidades: number; valorCosto: string; valorVenta: string }
-  }
-  filas: {
-    producto: string
-    laboratorio: string | null
-    presentacion: string | null
-    codigoBarras: string | null
-    numeroLote: string
-    fechaVencimiento: string
-    diasRestantes: number
-    estado: 'VENCIDO' | 'DIAS_30' | 'DIAS_60' | 'DIAS_90' | 'VIGENTE'
-    cantidad: number
-    costoUnitario: string
-    valorCosto: string
-    precioVenta: string
-    valorVenta: string
-  }[]
-}
-
-interface Ventas {
-  desde: string
-  hasta: string
-  resumen: { ventas: number; unidades: number; total: string; costo: string; ganancia: string }
-  filas: {
-    ventaId: number
-    fecha: string
-    dia: string
-    vendedor: string
-    producto: string
-    presentacion: string | null
-    numeroLote: string
-    cantidad: number
-    precioUnitario: string
-    subtotal: string
-    costo: string
-    ganancia: string
-  }[]
-}
-
-const ESTADO: Record<Inventario['filas'][number]['estado'], string> = {
+const ESTADO = {
   VENCIDO: 'Vencido',
   DIAS_30: 'Vence en 30 días',
   DIAS_60: 'Vence en 60 días',
@@ -69,9 +23,9 @@ export default function Reportes() {
   const [hasta, setHasta] = useState(hoy)
   // Qué botón está trabajando, para mostrar "Generando…" solo en ese
   const [ocupado, setOcupado] = useState('')
-  const [aviso, setAviso] = useState<{ tipo: 'exito' | 'error' | 'pendiente'; texto: string } | null>(null)
+  const [aviso, setAviso] = useState(null)
 
-  async function descargar(clave: string, obtener: () => Promise<Reporte | null>, formato: Formato) {
+  async function descargar(clave, obtener, formato) {
     setOcupado(clave + formato)
     setAviso(null)
     try {
@@ -88,13 +42,16 @@ export default function Reportes() {
     }
   }
 
-  async function inventario(venceEnDias?: number): Promise<Reporte | null> {
+  async function inventario(venceEnDias) {
     const ruta = venceEnDias === undefined ? '/reportes/inventario' : `/reportes/inventario?venceEnDias=${venceEnDias}`
-    const datos = await api<Inventario>(ruta)
+    const datos = await api(ruta)
     if (datos.filas.length === 0) {
       setAviso({
         tipo: 'pendiente',
-        texto: venceEnDias === undefined ? 'No hay lotes con stock.' : `No hay lotes que venzan en los próximos ${venceEnDias} días.`,
+        texto:
+          venceEnDias === undefined
+            ? 'No hay lotes con stock.'
+            : `No hay lotes que venzan en los próximos ${venceEnDias} días.`,
       })
       return null
     }
@@ -152,8 +109,8 @@ export default function Reportes() {
     }
   }
 
-  async function ventas(): Promise<Reporte | null> {
-    const datos = await api<Ventas>(`/reportes/ventas?desde=${desde}&hasta=${hasta}`)
+  async function ventas() {
+    const datos = await api(`/reportes/ventas?desde=${desde}&hasta=${hasta}`)
     if (datos.filas.length === 0) {
       setAviso({ tipo: 'pendiente', texto: 'No hubo ventas en ese período.' })
       return null
@@ -204,10 +161,10 @@ export default function Reportes() {
   }
 
   // Par de botones Excel / PDF de cada reporte (una función, no un componente: no tiene estado propio)
-  function botones(clave: string, obtener: () => Promise<Reporte | null>) {
+  function botones(clave, obtener) {
     return (
       <div className="fila">
-        {(['excel', 'pdf'] as Formato[]).map((formato) => (
+        {['excel', 'pdf'].map((formato) => (
           <button
             key={formato}
             type="button"

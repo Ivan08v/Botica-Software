@@ -10,8 +10,8 @@ API del sistema de inventario y vencimientos para boticas y veterinarias. NestJS
 | `usuarios` | Personas que usan el sistema, con rol `DUENO` o `VENDEDOR`; cada una pertenece a un negocio |
 | `productos` | Catálogo: nombre, laboratorio, presentación, código de barras, precio y stock mínimo |
 | `lotes` | Cada ingreso de mercadería: número de lote, fecha de vencimiento, cantidad y costo |
-| `clientes` | Clientes del negocio identificados por DNI (o carné de extranjería), con nombre y teléfono |
-| `ventas` | Cabecera de cada venta: fecha, usuario, cliente (opcional) y total |
+| `clientes` | Clientes del negocio identificados por DNI, carné de extranjería o RUC, con nombre (o razón social), teléfono, correo y dirección fiscal |
+| `ventas` | Cabecera de cada venta: fecha, usuario, cliente, total, comprobante (boleta o factura, con serie y número), medio de pago y monto recibido |
 | `detalle_venta` | Una línea por cada lote usado en una venta (para FEFO) |
 | `movimientos` | Historial de todo lo que cambia el stock: ingresos, ventas, ajustes y bajas por vencimiento |
 
@@ -68,20 +68,21 @@ Todas las rutas llevan el prefijo `/api` y, salvo el login, piden el encabezado 
 | `DELETE /productos/:id` | DUENO | Desactiva (no borra, para conservar el historial) |
 | `GET /lotes?productoId=` | Cualquier rol | Lotes ordenados por vencimiento |
 | `POST /lotes` | Cualquier rol | Ingresa un lote y registra el movimiento `INGRESO` |
-| `POST /ventas` | Cualquier rol | Registra una venta `{ "items": [{ "productoId": 1, "cantidad": 3 }], "clienteId": 5 }` descontando stock con FEFO (`clienteId` es opcional) |
+| `POST /ventas` | Cualquier rol | Registra una venta `{ "items": [{ "productoId": 1, "cantidad": 3 }], "clienteId": 5, "tipoComprobante": "BOLETA", "medioPago": "EFECTIVO", "montoRecibido": 20 }` descontando stock con FEFO. Solo `items` es obligatorio (ver [Comprobantes y medios de pago](#comprobantes-y-medios-de-pago)) |
 | `GET /ventas` | Cualquier rol | Últimas 50 ventas |
-| `GET /ventas/:id` | Cualquier rol | Venta con el detalle de cada lote usado |
+| `GET /ventas/:id` | Cualquier rol | Venta con el detalle de cada lote usado, el código del comprobante (`B001-00000012`) y el vuelto |
 | `POST /importacion/vista-previa` | DUENO | Valida las filas de un Excel de inventario y devuelve el estado de cada una, sin guardar |
 | `POST /importacion/confirmar` | DUENO | Vuelve a validar y guarda productos, lotes y movimientos en una transacción |
 | `GET /reportes/inventario?venceEnDias=` | DUENO | Lotes con stock valorizados al costo y a precio de venta; con `venceEnDias`, solo lo vencido o por vencer |
 | `GET /reportes/ventas?desde=&hasta=` | DUENO | Ventas de un período (días de Perú, hasta un año), con costo y ganancia por lote vendido |
 | `GET /panel` | DUENO | Vencimientos (vencidos, 30, 60 y 90 días), dinero en riesgo y productos con stock bajo |
 | `GET /alertas` | Cualquier rol | Conteo para el aviso del menú: productos por reponer, lotes vencidos y lotes que vencen en 30 días (sin montos) |
-| `GET /clientes?buscar=` | Cualquier rol | Busca clientes por DNI (inicio) o nombre |
-| `GET /clientes/documento/:documento` | Cualquier rol | Busca un cliente por su DNI desde la caja |
+| `GET /clientes?buscar=` | Cualquier rol | Busca clientes por documento (inicio) o nombre, con su número de compras |
+| `GET /clientes/documento/:documento` | Cualquier rol | Busca un cliente por su DNI o RUC desde la caja |
 | `GET /clientes/:id` | Cualquier rol | Ficha con número de compras, total gastado y sus últimas 20 ventas |
-| `POST /clientes` | Cualquier rol | Registra un cliente (DNI único por negocio) |
-| `PATCH /clientes/:id` | Cualquier rol | Edita nombre, documento o teléfono |
+| `POST /clientes` | Cualquier rol | Registra un cliente (documento único por negocio). Si no se indica `tipoDocumento`, se deduce: 8 dígitos es DNI, 11 dígitos es RUC |
+| `PATCH /clientes/:id` | Cualquier rol | Edita sus datos; un opcional enviado vacío se borra |
+| `DELETE /clientes/:id` | Cualquier rol | Elimina un cliente **sin compras** (`204`). Con compras responde `409`, para no perder su historial |
 
 ## Ventas con FEFO
 
@@ -93,6 +94,17 @@ FEFO (*first expired, first out*): sale primero lo que vence primero. Al registr
 4. Como última barrera, la base tiene `CHECK (cantidad_actual >= 0)`.
 
 Las pruebas cubren: venta que usa varios lotes, stock insuficiente, lotes vencidos que no se venden y ventas simultáneas ([test/ventas.e2e-spec.ts](test/ventas.e2e-spec.ts)).
+
+## Comprobantes y medios de pago
+
+Cada venta guarda qué comprobante se entregó y cómo se pagó. El sistema los numera, pero **no los envía a SUNAT**: no reemplaza a la facturación electrónica.
+
+- **Boleta o factura**, con serie y número correlativo por negocio: `B001-00000001`, `F001-00000001`. Un bloqueo de PostgreSQL (`pg_advisory_xact_lock`, uno por negocio y tipo) hace que dos ventas simultáneas reciban números seguidos, sin saltos ni repetidos.
+- **La factura exige un cliente con RUC.** La boleta puede ser anónima hasta S/ 700; por encima, SUNAT pide identificar al cliente.
+- **Medio de pago**: `EFECTIVO`, `TARJETA`, `YAPE`, `PLIN` o `TRANSFERENCIA`. En efectivo se puede indicar el `montoRecibido` y la respuesta trae el `vuelto`; si no cubre el total, la venta se rechaza (y la base lo impide con un `CHECK`).
+- **Un cliente con compras no se elimina**: la llave foránea es `ON DELETE RESTRICT`, así ninguna venta queda sin saber a quién se le hizo.
+
+Las pruebas están en [test/comprobantes.e2e-spec.ts](test/comprobantes.e2e-spec.ts) (incluye diez ventas simultáneas que reciben diez números seguidos) y en [test/clientes.e2e-spec.ts](test/clientes.e2e-spec.ts).
 
 ## Panel
 

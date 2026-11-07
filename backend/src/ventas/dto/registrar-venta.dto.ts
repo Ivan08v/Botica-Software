@@ -3,11 +3,14 @@ import {
   ArrayMaxSize,
   ArrayNotEmpty,
   IsArray,
+  IsEnum,
   IsInt,
+  IsNumber,
   IsOptional,
   Min,
   ValidateNested,
 } from "class-validator";
+import { MedioPago, TipoComprobante } from "../../generated/prisma/client";
 
 export class ItemVentaDto {
   @IsInt()
@@ -26,8 +29,22 @@ export class RegistrarVentaDto {
   @Type(() => ItemVentaDto)
   items: ItemVentaDto[];
 
-  // Opcional: cliente registrado del mismo negocio (para su historial de compras)
+  // Cliente registrado del mismo negocio. Opcional en boleta (salvo montos altos), obligatorio en factura.
   @IsOptional()
   @IsInt()
   clienteId?: number;
+
+  @IsOptional()
+  @IsEnum(TipoComprobante, { message: "El comprobante debe ser BOLETA o FACTURA" })
+  tipoComprobante?: TipoComprobante;
+
+  @IsOptional()
+  @IsEnum(MedioPago, { message: "El medio de pago debe ser EFECTIVO, TARJETA, YAPE, PLIN o TRANSFERENCIA" })
+  medioPago?: MedioPago;
+
+  // Solo en efectivo: con cuánto paga el cliente, para calcular el vuelto
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 2 }, { message: "El monto recibido debe ser un número con máximo 2 decimales" })
+  @Min(0.01, { message: "El monto recibido debe ser mayor que cero" })
+  montoRecibido?: number;
 }

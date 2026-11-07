@@ -32,6 +32,7 @@ describe("Clientes y alertas (e2e)", () => {
       get: (ruta: string) => servidor.get(ruta).set(auth),
       post: (ruta: string, cuerpo: object) => servidor.post(ruta).set(auth).send(cuerpo),
       patch: (ruta: string, cuerpo: object) => servidor.patch(ruta).set(auth).send(cuerpo),
+      delete: (ruta: string) => servidor.delete(ruta).set(auth),
     };
   }
 
@@ -148,6 +149,65 @@ describe("Clientes y alertas (e2e)", () => {
       .expect(404);
     const lote = await prisma.lote.findFirstOrThrow({ where: { productoId } });
     expect(lote.cantidadActual).toBe(5);
+  });
+
+  it("deduce el tipo de documento y valida que coincida con el indicado", async () => {
+    const dni = (await como(vendedor).post("/clientes", { documento: dniNuevo(), nombre: "Con DNI" }).expect(201))
+      .body;
+    expect(dni.tipoDocumento).toBe("DNI");
+
+    const ruc = `20${String(Date.now()).slice(-9)}`;
+    const empresa = await como(vendedor)
+      .post("/clientes", { documento: ruc, nombre: "Empresa Prueba S.A.C.", direccion: " Jr. Lima 123 " })
+      .expect(201);
+    expect(empresa.body).toEqual(
+      expect.objectContaining({ tipoDocumento: "RUC", documento: ruc, direccion: "Jr. Lima 123" }),
+    );
+
+    // Un RUC tiene que empezar con 10, 15, 16, 17 o 20; y un DNI no puede tener 11 dígitos
+    await como(vendedor).post("/clientes", { tipoDocumento: "RUC", documento: "99123456789", nombre: "X Y" }).expect(400);
+    await como(vendedor).post("/clientes", { tipoDocumento: "DNI", documento: ruc, nombre: "X Y" }).expect(400);
+    await como(vendedor).post("/clientes", { documento: dniNuevo(), nombre: "Correo malo", email: "no-es-correo" }).expect(400);
+  });
+
+  it("edita un cliente y puede borrar sus datos opcionales", async () => {
+    const creado = (
+      await como(vendedor)
+        .post("/clientes", { documento: dniNuevo(), nombre: "Para editar", telefono: "987000111", email: "a@b.pe" })
+        .expect(201)
+    ).body;
+    const editado = await como(vendedor)
+      .patch(`/clientes/${creado.id}`, { nombre: "Editado", telefono: "", email: null })
+      .expect(200);
+    expect(editado.body).toEqual(expect.objectContaining({ nombre: "Editado", telefono: null, email: null }));
+  });
+
+  it("la lista trae cuántas compras tiene cada cliente", async () => {
+    const cliente = (await como(vendedor).post("/clientes", { documento: dniNuevo(), nombre: "Contador Compras" }))
+      .body;
+    const productoId = await productoConStock(vendedor.negocioId);
+    await como(vendedor).post("/ventas", { clienteId: cliente.id, items: [{ productoId, cantidad: 1 }] }).expect(201);
+
+    const lista = await como(vendedor).get(`/clientes?buscar=${cliente.documento}`).expect(200);
+    expect(lista.body[0]).toEqual(expect.objectContaining({ id: cliente.id, compras: 1 }));
+  });
+
+  it("elimina un cliente sin compras, pero no uno con compras ni uno de otro negocio", async () => {
+    const sinCompras = (await como(vendedor).post("/clientes", { documento: dniNuevo(), nombre: "Sin compras" })).body;
+    await como(vendedor).delete(`/clientes/${sinCompras.id}`).expect(204);
+    await como(vendedor).get(`/clientes/${sinCompras.id}`).expect(404);
+    await como(vendedor).delete(`/clientes/${sinCompras.id}`).expect(404);
+
+    const conCompras = (await como(vendedor).post("/clientes", { documento: dniNuevo(), nombre: "Con compras" })).body;
+    const productoId = await productoConStock(vendedor.negocioId);
+    await como(vendedor).post("/ventas", { clienteId: conCompras.id, items: [{ productoId, cantidad: 1 }] }).expect(201);
+    const res = await como(vendedor).delete(`/clientes/${conCompras.id}`).expect(409);
+    expect(res.body.message).toMatch(/1 compra registrada/);
+    await como(vendedor).get(`/clientes/${conCompras.id}`).expect(200);
+
+    const ajeno = (await como(veterinaria).post("/clientes", { documento: dniNuevo(), nombre: "Ajeno" })).body;
+    await como(vendedor).delete(`/clientes/${ajeno.id}`).expect(404);
+    await como(veterinaria).get(`/clientes/${ajeno.id}`).expect(200);
   });
 
   it("el mismo DNI puede ser cliente de dos negocios distintos", async () => {

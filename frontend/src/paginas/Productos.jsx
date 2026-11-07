@@ -264,7 +264,7 @@ export default function Productos() {
               </li>
             ))}
           </ul>
-          <Paginador {...paginacion} />
+          <Paginador {...paginacion} nombre="productos" />
         </>
       )}
     </section>

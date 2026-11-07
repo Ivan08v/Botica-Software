@@ -207,11 +207,20 @@ async function main() {
     },
   });
   const lotesBotica = await cargarCatalogo(botica.id, dueno.id, productos, (i) => ean13(i + 1));
-  // Clientes frecuentes de ejemplo (DNI ficticios)
+  // Clientes frecuentes de ejemplo (DNI y RUC ficticios). El RUC permite probar una factura.
   await prisma.cliente.createMany({
     data: [
       { negocioId: botica.id, documento: "45871236", nombre: "Rosa Quispe Huamán", telefono: "987654321" },
       { negocioId: botica.id, documento: "70213458", nombre: "Carlos Mendoza Ríos", telefono: null },
+      {
+        negocioId: botica.id,
+        tipoDocumento: "RUC",
+        documento: "20601234567",
+        nombre: "Consultorio Médico Santa Rosa S.A.C.",
+        telefono: "012345678",
+        email: "compras@santarosa.pe",
+        direccion: "Av. 28 de Julio 345, Huacho",
+      },
     ],
   });
 

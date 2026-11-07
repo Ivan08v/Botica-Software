@@ -1,26 +1,38 @@
 import { useState } from 'react'
 import { api, ErrorApi, mensajeDe } from '../api'
+import { TIPOS_DOCUMENTO } from '../formato'
+import Icono from './Icono.jsx'
 
-// Cliente opcional de la venta: se busca por DNI y, si no existe, se registra ahí mismo
-// con nombre y teléfono, sin salir de la caja.
-export default function ElegirCliente({ cliente, alCambiar }) {
+// Cliente de la venta: se busca por DNI o RUC y, si no existe, se registra ahí mismo
+// sin salir de la caja. En una factura se pide RUC y la dirección fiscal.
+export default function ElegirCliente({ cliente, alCambiar, factura }) {
   const [documento, setDocumento] = useState('')
   const [nuevo, setNuevo] = useState(false)
   const [nombre, setNombre] = useState('')
   const [telefono, setTelefono] = useState('')
+  const [direccion, setDireccion] = useState('')
   const [error, setError] = useState('')
   const [ocupado, setOcupado] = useState(false)
+  const limpio = documento.trim()
+  // 11 dígitos es un RUC: se pide razón social y dirección fiscal
+  const esRuc = /^\d{11}$/.test(limpio)
+
+  function limpiar() {
+    setDocumento('')
+    setNombre('')
+    setTelefono('')
+    setDireccion('')
+    setNuevo(false)
+  }
 
   async function buscar(e) {
     e.preventDefault()
-    const limpio = documento.trim()
     if (!limpio) return
     setError('')
     setOcupado(true)
     try {
       alCambiar(await api(`/clientes/documento/${encodeURIComponent(limpio)}`))
-      setDocumento('')
-      setNuevo(false)
+      limpiar()
     } catch (err) {
       // No existe: se ofrece registrarlo con el documento ya escrito
       if (err instanceof ErrorApi && err.estado === 404) setNuevo(true)
@@ -35,15 +47,13 @@ export default function ElegirCliente({ cliente, alCambiar }) {
     setError('')
     setOcupado(true)
     try {
-      const creado = await api('/clientes', {
-        metodo: 'POST',
-        cuerpo: { documento: documento.trim(), nombre, ...(telefono.trim() ? { telefono: telefono.trim() } : {}) },
-      })
-      alCambiar(creado)
-      setDocumento('')
-      setNombre('')
-      setTelefono('')
-      setNuevo(false)
+      alCambiar(
+        await api('/clientes', {
+          metodo: 'POST',
+          cuerpo: { documento: limpio, nombre: nombre.trim(), telefono, direccion },
+        }),
+      )
+      limpiar()
     } catch (err) {
       setError(mensajeDe(err))
     } finally {
@@ -52,14 +62,28 @@ export default function ElegirCliente({ cliente, alCambiar }) {
   }
 
   if (cliente) {
+    const sinRuc = factura && cliente.tipoDocumento !== 'RUC'
     return (
-      <div className="elegido">
-        <span>
-          <strong>{cliente.nombre}</strong>
-          <span className="tenue">DNI {cliente.documento}</span>
+      <div className={`cliente-elegido ${sinRuc ? 'con-problema' : ''}`}>
+        <span className="avatar-cliente">
+          <Icono nombre={cliente.tipoDocumento === 'RUC' ? 'domain' : 'person'} />
         </span>
-        <button type="button" className="boton secundario chico" onClick={() => alCambiar(null)}>
-          Quitar
+        <span className="cliente-elegido-datos">
+          <strong>{cliente.nombre}</strong>
+          <span className="tenue">
+            {TIPOS_DOCUMENTO[cliente.tipoDocumento]?.nombre ?? 'DNI'} {cliente.documento}
+          </span>
+          {cliente.direccion && <span className="tenue">{cliente.direccion}</span>}
+          {sinRuc && <span className="texto-error">Para una factura el cliente debe tener RUC</span>}
+        </span>
+        <button
+          type="button"
+          className="boton-icono chico"
+          onClick={() => alCambiar(null)}
+          title="Cambiar cliente"
+          aria-label="Quitar cliente"
+        >
+          <Icono nombre="close" />
         </button>
       </div>
     )
@@ -70,7 +94,7 @@ export default function ElegirCliente({ cliente, alCambiar }) {
       <form className="fila" onSubmit={buscar}>
         <input
           inputMode="numeric"
-          placeholder="DNI del cliente (opcional)"
+          placeholder={factura ? 'RUC del cliente (11 dígitos)' : 'DNI o RUC del cliente'}
           maxLength={12}
           value={documento}
           onChange={(e) => {
@@ -78,22 +102,28 @@ export default function ElegirCliente({ cliente, alCambiar }) {
             setNuevo(false)
             setError('')
           }}
-          aria-label="DNI del cliente"
+          aria-label={factura ? 'RUC del cliente' : 'DNI o RUC del cliente'}
         />
-        <button className="boton secundario" disabled={ocupado || !documento.trim()}>
-          Buscar
+        <button className="boton secundario con-icono" disabled={ocupado || !limpio}>
+          <Icono nombre="search" /> Buscar
         </button>
       </form>
 
       {nuevo && (
         <form className="aviso pendiente" onSubmit={registrar}>
           <p>
-            No hay ningún cliente con el documento <strong>{documento.trim()}</strong>. Regístralo:
+            No hay ningún cliente con el {esRuc ? 'RUC' : 'documento'} <strong>{limpio}</strong>. Regístralo:
           </p>
           <label>
-            Nombre completo
+            {esRuc ? 'Razón social' : 'Nombre completo'}
             <input required minLength={2} maxLength={120} value={nombre} onChange={(e) => setNombre(e.target.value)} />
           </label>
+          {esRuc && (
+            <label>
+              Dirección fiscal
+              <input maxLength={200} value={direccion} onChange={(e) => setDireccion(e.target.value)} />
+            </label>
+          )}
           <label>
             Teléfono (opcional)
             <input inputMode="tel" maxLength={16} value={telefono} onChange={(e) => setTelefono(e.target.value)} />

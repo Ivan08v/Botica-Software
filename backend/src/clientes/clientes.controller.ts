@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, Param, ParseIntPipe, Patch, Post, Query } from "@nestjs/common";
 import { UsuarioActual } from "../auth/decoradores";
 import type { UsuarioToken } from "../auth/decoradores";
 import { ClientesService } from "./clientes.service";
@@ -36,5 +36,12 @@ export class ClientesController {
     @Body() dto: ActualizarClienteDto,
   ) {
     return this.clientes.actualizar(usuario.negocioId, id, dto);
+  }
+
+  // Responde 204 sin cuerpo. Un cliente con compras no se elimina (409).
+  @Delete(":id")
+  @HttpCode(204)
+  eliminar(@UsuarioActual() usuario: UsuarioToken, @Param("id", ParseIntPipe) id: number) {
+    return this.clientes.eliminar(usuario.negocioId, id);
   }
 }

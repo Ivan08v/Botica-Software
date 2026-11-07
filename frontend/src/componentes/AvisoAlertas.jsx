@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { api } from '../api'
+import Icono from './Icono.jsx'
 
 const CADA_MINUTO = 60_000
 
@@ -40,8 +41,8 @@ export default function AvisoAlertas({ destino }) {
       title={partes.join(' · ')}
       aria-label={`Alertas: ${partes.join(', ')}`}
     >
-      <span aria-hidden="true">⚠</span> {alertas.total}
-      <span className="solo-escritorio"> {alertas.total === 1 ? 'alerta' : 'alertas'}</span>
+      <Icono nombre="notifications" />
+      <span className="aviso-alertas-numero">{alertas.total}</span>
     </Link>
   )
 }

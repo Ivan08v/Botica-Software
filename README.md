@@ -4,7 +4,7 @@
 
 Sistema web para que un negocio pequeño sepa qué tiene en stock, qué está por vencer y cuánto dinero puede perder si no lo vende a tiempo. Pensado para boticas y veterinarias independientes de Huacho (Perú), y para usarse desde el celular en el mostrador.
 
-No es un sistema de caja ni emite comprobantes electrónicos: es un complemento de control de inventario.
+Registra cada venta con su boleta o factura numerada y el medio de pago, pero no emite comprobantes electrónicos ante SUNAT: es un complemento de control de inventario.
 
 | Panel en escritorio | Panel en celular | Venta en celular |
 | --- | --- | --- |
@@ -15,7 +15,8 @@ No es un sistema de caja ni emite comprobantes electrónicos: es un complemento 
 - **Panel del dueño**: lotes vencidos y por vencer a 30, 60 y 90 días, productos con stock bajo y "dinero en riesgo" (soles, al costo, en lotes que vencen en los próximos 90 días).
 - **Ventas con FEFO** (*first expired, first out*): al vender, el sistema descuenta primero del lote que vence antes y le dice al vendedor de qué lote entregar.
 - **Aviso de alertas en todas las pantallas**: un contador en el encabezado con los productos por reponer (debajo del stock mínimo) y los lotes vencidos o por vencer en 30 días. Lo ven la dueña y el vendedor.
-- **Atención al cliente**: en la venta se puede buscar al cliente por DNI o registrarlo al momento; su ficha muestra cuántas veces compró, cuánto gastó y qué llevó.
+- **Caja**: en cada venta se elige boleta o factura (numeradas B001 y F001), el cliente por DNI o RUC (o se registra al momento) y el medio de pago: efectivo con vuelto, tarjeta, Yape, Plin o transferencia. Al final muestra el comprobante para imprimir.
+- **Clientes**: registrar, buscar, editar y eliminar (solo si no tiene compras), con DNI, carné de extranjería o RUC y dirección fiscal; su ficha muestra cuántas veces compró, cuánto gastó y qué llevó.
 - **Ingreso de mercadería por lotes**, con número de lote, fecha de vencimiento, cantidad y costo.
 - **Reportes en Excel y PDF**: inventario valorizado, lotes por vencer y ventas por período con ganancia bruta.
 - **Importación desde Excel** del inventario inicial, con vista previa y aviso de errores fila por fila.

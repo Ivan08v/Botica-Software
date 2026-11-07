@@ -28,6 +28,27 @@ enum TipoMovimiento {
   BAJA_VENCIMIENTO // se retira un lote vencido
 }
 
+enum TipoDocumento {
+  DNI // 8 dígitos
+  CE // carné de extranjería, 9 a 12 caracteres
+  RUC // 11 dígitos: empresas y personas con negocio; necesario para una factura
+}
+
+// Tipo de comprobante que se entrega. El sistema lo registra y numera, pero no lo
+// envía a SUNAT: no reemplaza a la facturación electrónica.
+enum TipoComprobante {
+  BOLETA
+  FACTURA
+}
+
+enum MedioPago {
+  EFECTIVO
+  TARJETA
+  YAPE
+  PLIN
+  TRANSFERENCIA
+}
+
 // Cada botica o veterinaria que usa el sistema
 model Negocio {
   id          Int          @id @default(autoincrement())
@@ -109,17 +130,20 @@ model Lote {
   @@map("lotes")
 }
 
-// Cliente de la botica, identificado por su DNI (o carné de extranjería) dentro del negocio.
-// Registrarlo es opcional en la venta: sirve para atenderlo mejor y ver su historial.
+// Cliente de la botica, identificado por su DNI, carné de extranjería o RUC dentro del negocio.
+// Registrarlo es opcional en una boleta (salvo montos altos) y obligatorio en una factura.
 model Cliente {
-  id        Int      @id @default(autoincrement())
-  negocioId Int      @map("negocio_id")
-  negocio   Negocio  @relation(fields: [negocioId], references: [id])
-  documento String // DNI (8 dígitos) o carné de extranjería
-  nombre    String
-  telefono  String?
-  creadoEn  DateTime @default(now()) @map("creado_en")
-  ventas    Venta[]
+  id            Int           @id @default(autoincrement())
+  negocioId     Int           @map("negocio_id")
+  negocio       Negocio       @relation(fields: [negocioId], references: [id])
+  tipoDocumento TipoDocumento @default(DNI) @map("tipo_documento")
+  documento     String
+  nombre        String // nombre completo o, si es RUC de empresa, la razón social
+  telefono      String?
+  email         String?
+  direccion     String? // dirección fiscal, para la factura
+  creadoEn      DateTime      @default(now()) @map("creado_en")
+  ventas        Venta[]
 
   // El mismo DNI puede ser cliente de dos boticas distintas
   @@unique([negocioId, documento])
@@ -136,10 +160,21 @@ model Venta {
   usuario   Usuario        @relation(fields: [usuarioId], references: [id])
   // Opcional: la mayoría de ventas de mostrador son anónimas
   clienteId Int?           @map("cliente_id")
-  cliente   Cliente?       @relation(fields: [clienteId], references: [id])
+  // Restrict: la base no deja eliminar un cliente que tiene ventas
+  cliente   Cliente?       @relation(fields: [clienteId], references: [id], onDelete: Restrict)
   total     Decimal        @db.Decimal(10, 2)
   detalles  DetalleVenta[]
 
+  tipoComprobante TipoComprobante @default(BOLETA) @map("tipo_comprobante")
+  // Serie y número correlativo por negocio: B001-00000001, F001-00000001...
+  // Pueden ser nulos solo en ventas cargadas directo a la base (pruebas, datos antiguos).
+  serie           String?
+  numero          Int?
+  medioPago       MedioPago       @default(EFECTIVO) @map("medio_pago")
+  // Solo en efectivo: con cuánto pagó el cliente (el vuelto es la diferencia con el total)
+  montoRecibido   Decimal?        @map("monto_recibido") @db.Decimal(10, 2)
+
+  @@unique([negocioId, serie, numero])
   @@index([negocioId, fecha])
   @@index([clienteId, fecha])
   @@map("ventas")

@@ -33,7 +33,7 @@ El código de barras es único por negocio (no en toda la base), porque dos boti
 ```bash
 npm install
 cp .env.example .env                   # y cambia JWT_SECRET
-npm run db:up                          # levanta PostgreSQL en Docker (puerto 5433)
+npm run db:up                          # levanta PostgreSQL en Docker (puerto 5434)
 npm run db:generate                    # genera el cliente de Prisma en src/generated
 npm run db:migrate                     # crea las tablas
 npm run db:seed                        # carga dos negocios demo con sus productos y lotes
@@ -50,7 +50,7 @@ Los datos de prueba calculan los vencimientos desde el día en que ejecutas el s
 
 ## Ver la base con DBeaver
 
-Nueva conexión PostgreSQL con: host `localhost`, puerto `5433`, base `botica`, usuario `botica`, contraseña `botica`. Úsalo para consultar; los cambios de estructura se hacen con migraciones de Prisma (`npm run db:migrate`), no a mano, para que el historial de migraciones no se desincronice.
+Nueva conexión PostgreSQL con: host `localhost`, puerto `5434`, base `botica`, usuario `botica`, contraseña `botica`. Úsalo para consultar; los cambios de estructura se hacen con migraciones de Prisma (`npm run db:migrate`), no a mano, para que el historial de migraciones no se desincronice.
 
 ## Endpoints
 

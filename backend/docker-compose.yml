@@ -8,8 +8,8 @@ services:
       POSTGRES_PASSWORD: botica
       POSTGRES_DB: botica
     ports:
-      # 5433 en tu computadora (el 5432 queda libre para otros proyectos) -> 5432 dentro del contenedor
-      - "5433:5432"
+      # 5434 en tu computadora (5432 y 5433 quedan libres para otros proyectos) -> 5432 dentro del contenedor
+      - "5434:5432"
     volumes:
       - botica-data:/var/lib/postgresql/data
     healthcheck:

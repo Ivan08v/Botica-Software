@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { api, mensajeDe } from '../api'
 import { fecha, soles } from '../formato'
+import DarDeBaja from '../componentes/DarDeBaja.jsx'
 import Icono from '../componentes/Icono.jsx'
 import Paginador from '../componentes/Paginador.jsx'
 import { usePaginacion } from '../componentes/usePaginacion.js'
@@ -67,12 +68,27 @@ export default function Panel() {
   const [filtro, setFiltro] = useState(null)
   const [busqueda, setBusqueda] = useState('')
   const tablaRef = useRef(null)
+  // Ventana de baja abierta: { lotes, todos } o null
+  const [baja, setBaja] = useState(null)
+  const [aviso, setAviso] = useState('')
+  // Al cambiar, se vuelve a pedir el panel (por ejemplo, después de dar de baja)
+  const [recargar, setRecargar] = useState(0)
 
   useEffect(() => {
     api('/panel')
       .then(setDatos)
       .catch((e) => setError(mensajeDe(e)))
-  }, [])
+  }, [recargar])
+
+  function alTerminarBaja(resultado) {
+    setBaja(null)
+    setAviso(
+      `Se ${resultado.lotes === 1 ? 'dio de baja 1 lote' : `dieron de baja ${resultado.lotes} lotes`} ` +
+        `(${resultado.unidades} unidades) por ${resultado.destino === 'DESTRUCCION' ? 'destrucción' : 'devolución al proveedor'}. ` +
+        `Pérdida al costo: ${soles(resultado.valor)}.`,
+    )
+    setRecargar((n) => n + 1)
+  }
 
   const texto = busqueda.trim().toLowerCase()
   const lotes = (datos?.lotesPorVencer ?? []).filter(
@@ -98,8 +114,22 @@ export default function Panel() {
     tablaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
+  const vencidos = datos.lotesPorVencer.filter((l) => l.tramo === 'VENCIDO')
+
   return (
     <div className="panel">
+      {aviso && (
+        <p className="aviso exito con-icono aviso-cerrable">
+          <Icono nombre="check_circle" /> {aviso}
+          <button type="button" className="boton-icono chico" onClick={() => setAviso('')} aria-label="Cerrar aviso">
+            <Icono nombre="close" />
+          </button>
+        </p>
+      )}
+      {baja && (
+        <DarDeBaja lotes={baja.lotes} todos={baja.todos} alCerrar={() => setBaja(null)} alTerminar={alTerminarBaja} />
+      )}
+
       <section className="resumen-tramos" aria-label="Resumen de vencimientos">
         {TRAMOS.map((t) => {
           const r = resumen(t)
@@ -120,7 +150,18 @@ export default function Panel() {
               <p className="tarjeta-tramo-monto">{soles(r.valor)}</p>
               <p className="tenue">{t.detalle(r.lotes)}</p>
               <footer>
-                <span>Valor al costo</span>
+                {/* Los vencidos no se pueden vender: desde aquí se retiran del inventario */}
+                {t.tramo === 'VENCIDO' && vencidos.length > 0 ? (
+                  <button
+                    type="button"
+                    className="boton-texto boton-baja-todos"
+                    onClick={() => setBaja({ lotes: vencidos, todos: true })}
+                  >
+                    <Icono nombre="delete_sweep" /> Dar de baja todos
+                  </button>
+                ) : (
+                  <span>Valor al costo</span>
+                )}
                 <button type="button" className="boton-texto" onClick={() => verTramo(t.tramo)} disabled={r.lotes === 0}>
                   Ver lotes <Icono nombre="arrow_forward" />
                 </button>
@@ -232,6 +273,16 @@ export default function Panel() {
                             <span className="punto" />
                             {textoDias(l.diasRestantes)}
                           </span>
+                          {l.tramo === 'VENCIDO' && (
+                            <button
+                              type="button"
+                              className="boton-baja"
+                              onClick={() => setBaja({ lotes: [l], todos: false })}
+                              title="Retirar este lote del inventario"
+                            >
+                              <Icono nombre="delete" /> Dar de baja
+                            </button>
+                          )}
                         </td>
                         <td className="num">
                           <strong className="cifra">{l.cantidadActual}</strong> <span className="tenue">und</span>

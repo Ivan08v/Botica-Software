@@ -86,6 +86,7 @@ Todas las rutas llevan el prefijo `/api` y, salvo el login, piden el encabezado 
 | `DELETE /productos/:id` | DUENO | Desactiva (no borra, para conservar el historial) |
 | `GET /lotes?productoId=` | Cualquier rol | Lotes ordenados por vencimiento |
 | `POST /lotes` | Cualquier rol | Ingresa un lote y registra el movimiento `INGRESO` |
+| `POST /lotes/bajas` | DUENO | Da de baja lotes **vencidos** `{ "loteIds": [3, 8], "destino": "DESTRUCCION", "observacion": "Acta N° 012" }`: el stock queda en 0 y se registra un movimiento `BAJA_VENCIMIENTO`. Sin `loteIds`, da de baja todos los vencidos. Destino: `DESTRUCCION` o `DEVOLUCION_PROVEEDOR` |
 | `POST /ventas` | Cualquier rol | Registra una venta `{ "items": [{ "productoId": 1, "cantidad": 3 }], "clienteId": 5, "tipoComprobante": "BOLETA", "medioPago": "EFECTIVO", "montoRecibido": 20 }` descontando stock con FEFO. Solo `items` es obligatorio (ver [Comprobantes y medios de pago](#comprobantes-y-medios-de-pago)) |
 | `GET /ventas` | Cualquier rol | Últimas 50 ventas |
 | `GET /ventas/proximo-comprobante` | Cualquier rol | Número que llevará la próxima boleta y factura (informativo: el definitivo se asigna al cobrar) |
@@ -94,6 +95,7 @@ Todas las rutas llevan el prefijo `/api` y, salvo el login, piden el encabezado 
 | `POST /importacion/confirmar` | DUENO | Vuelve a validar y guarda productos, lotes y movimientos en una transacción |
 | `GET /reportes/inventario?venceEnDias=` | DUENO | Lotes con stock valorizados al costo y a precio de venta; con `venceEnDias`, solo lo vencido o por vencer |
 | `GET /reportes/ventas?desde=&hasta=` | DUENO | Ventas de un período (días de Perú, hasta un año), con costo y ganancia por lote vendido |
+| `GET /reportes/bajas?desde=&hasta=` | DUENO | Lotes dados de baja en un período, con destino, observación y pérdida al costo |
 | `GET /panel` | DUENO | Vencimientos (vencidos, 30, 60 y 90 días), dinero en riesgo y productos con stock bajo |
 | `GET /alertas` | Cualquier rol | Conteo para el aviso del menú: productos por reponer, lotes vencidos y lotes que vencen en 30 días (sin montos) |
 | `GET /clientes?buscar=` | Cualquier rol | Busca clientes por documento (inicio) o nombre, con su número de compras |

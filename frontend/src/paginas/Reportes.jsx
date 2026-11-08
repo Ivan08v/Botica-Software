@@ -201,6 +201,55 @@ function reporteVentas(datos, desde, hasta, negocio) {
   }
 }
 
+const DESTINO = { DESTRUCCION: 'Destrucción', DEVOLUCION_PROVEEDOR: 'Devolución al proveedor' }
+
+function reporteBajas(datos, desde, hasta, negocio) {
+  const r = datos.resumen
+  const periodo = desde === hasta ? fecha(desde) : `${fecha(desde)} al ${fecha(hasta)}`
+  return {
+    titulo: 'Bajas por vencimiento',
+    negocio,
+    detalle: `Del ${periodo}`,
+    resumen: [
+      ['Lotes dados de baja', String(r.lotes)],
+      ['Unidades retiradas', String(r.unidades)],
+      ['Pérdida total al costo', soles(r.valor)],
+      ['Por destrucción', soles(r.destruccion)],
+      ['Por devolución al proveedor', soles(r.devolucionProveedor)],
+    ],
+    columnas: [
+      { titulo: 'Fecha de baja', tipo: 'fecha', ancho: 12 },
+      { titulo: 'Producto', ancho: 32 },
+      { titulo: 'Presentación', ancho: 22 },
+      { titulo: 'Laboratorio', ancho: 16 },
+      { titulo: 'Lote', ancho: 12 },
+      { titulo: 'Venció', tipo: 'fecha', ancho: 12 },
+      { titulo: 'Cantidad', tipo: 'entero' },
+      { titulo: 'Costo unit.', tipo: 'soles' },
+      { titulo: 'Pérdida', tipo: 'soles' },
+      { titulo: 'Destino', ancho: 22 },
+      { titulo: 'Observación', ancho: 34 },
+      { titulo: 'Registró', ancho: 18 },
+    ],
+    filas: datos.filas.map((f) => [
+      f.dia,
+      f.producto,
+      f.presentacion,
+      f.laboratorio,
+      f.numeroLote,
+      f.fechaVencimiento,
+      f.cantidad,
+      f.costoUnitario,
+      f.valor,
+      DESTINO[f.destino],
+      f.observacion,
+      f.usuario,
+    ]),
+    nombreArchivo: `bajas-${desde}-al-${hasta}`,
+    filasOriginales: datos.filas,
+  }
+}
+
 // Las filas del reporte de ventas son por lote vendido; la vista previa las junta por venta
 function ventasAgrupadas(filas) {
   const porVenta = new Map()
@@ -316,6 +365,8 @@ export default function Reportes() {
   const [dias, setDias] = useState(90)
   const [desde, setDesde] = useState(hoy.slice(0, 8) + '01')
   const [hasta, setHasta] = useState(hoy)
+  const [desdeBajas, setDesdeBajas] = useState(hoy.slice(0, 8) + '01')
+  const [hastaBajas, setHastaBajas] = useState(hoy)
   // Qué botón está trabajando (ej. "ventas-excel"), para mostrar "Generando…" solo en ese
   const [ocupado, setOcupado] = useState('')
   const [aviso, setAviso] = useState(null)
@@ -328,6 +379,9 @@ export default function Reportes() {
   const repInventario = inventario.datos && reporteInventario(inventario.datos, filtroInventario, negocio)
   const repPorVencer = porVencer.datos && reportePorVencer(porVencer.datos, dias, negocio)
   const repVentas = ventas.datos && reporteVentas(ventas.datos, desde, hasta, negocio)
+  const periodoBajasValido = desdeBajas && hastaBajas && desdeBajas <= hastaBajas
+  const bajas = useDatos(periodoBajasValido ? `/reportes/bajas?desde=${desdeBajas}&hasta=${hastaBajas}` : null)
+  const repBajas = bajas.datos && reporteBajas(bajas.datos, desdeBajas, hastaBajas, negocio)
   const ventasVista = repVentas ? ventasAgrupadas(repVentas.filasOriginales) : []
 
   async function descargar(clave, reporte, formato) {
@@ -551,6 +605,82 @@ export default function Reportes() {
               <td className="num">
                 <strong>{soles(v.totalVenta)}</strong>
               </td>
+            </tr>
+          ))}
+        </VistaPrevia>
+      </TarjetaReporte>
+
+      <TarjetaReporte
+        tono="rojo"
+        icono="delete_sweep"
+        titulo="Bajas por vencimiento"
+        descripcion="Los lotes vencidos que se retiraron del inventario: si se destruyeron o se devolvieron al proveedor, con su acta u observación y la pérdida al costo."
+        filtros={
+          <>
+            <label className="filtro-en-linea">
+              Desde:
+              <input
+                type="date"
+                value={desdeBajas}
+                max={hastaBajas}
+                onChange={(e) => setDesdeBajas(e.target.value)}
+              />
+            </label>
+            <label className="filtro-en-linea">
+              Hasta:
+              <input
+                type="date"
+                value={hastaBajas}
+                min={desdeBajas}
+                max={hoy}
+                onChange={(e) => setHastaBajas(e.target.value)}
+              />
+            </label>
+          </>
+        }
+        descargas={
+          <Descargas reporte={repBajas} ocupado={ocupadoEn('bajas')} alDescargar={(r, f) => descargar('bajas', r, f)} />
+        }
+      >
+        <VistaPrevia
+          tono="tono-rojo"
+          cargando={!!periodoBajasValido && !bajas.datos && !bajas.error}
+          error={periodoBajasValido ? bajas.error : 'La fecha inicial no puede ser posterior a la final.'}
+          vacio={
+            repBajas?.filas.length === 0 &&
+            'No se dio de baja ningún lote en ese período. Los vencidos se dan de baja desde el Panel de control.'
+          }
+          total={repBajas?.filas.length ?? 0}
+          nombre="bajas"
+          nota={repBajas && repBajas.filas.length > 0 ? `Pérdida total: ${soles(bajas.datos.resumen.valor)}` : ''}
+          encabezados={[
+            ['Fecha'],
+            ['Producto'],
+            ['Lote'],
+            ['Cantidad', 'num'],
+            ['Pérdida', 'num'],
+            ['Destino', 'centro'],
+            ['Observación'],
+          ]}
+        >
+          {repBajas?.filasOriginales.slice(0, 3).map((f) => (
+            <tr key={`${f.fecha}-${f.numeroLote}`}>
+              <td className="tenue">{fecha(f.dia)}</td>
+              <td className="producto">
+                <strong>{f.producto}</strong>
+                <span className="tenue">{f.presentacion}</span>
+              </td>
+              <td className="codigo-celda">{f.numeroLote}</td>
+              <td className="num">{f.cantidad} und</td>
+              <td className="num">
+                <strong>{soles(f.valor)}</strong>
+              </td>
+              <td className="centro">
+                <span className={`chip ${f.destino === 'DESTRUCCION' ? 'tono-rojo' : 'tono-azul'}`}>
+                  {DESTINO[f.destino]}
+                </span>
+              </td>
+              <td className="tenue">{f.observacion}</td>
             </tr>
           ))}
         </VistaPrevia>

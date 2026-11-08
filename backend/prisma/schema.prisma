@@ -28,6 +28,12 @@ enum TipoMovimiento {
   BAJA_VENCIMIENTO // se retira un lote vencido
 }
 
+// Qué se hizo con un lote vencido que se dio de baja
+enum DestinoBaja {
+  DESTRUCCION // se destruye (con acta, según DIGEMID)
+  DEVOLUCION_PROVEEDOR // se devuelve al proveedor o droguería (canje o nota de crédito)
+}
+
 enum TipoDocumento {
   DNI // 8 dígitos
   CE // carné de extranjería, 9 a 12 caracteres
@@ -164,7 +170,7 @@ model Venta {
   cliente   Cliente?       @relation(fields: [clienteId], references: [id], onDelete: Restrict)
   total     Decimal        @db.Decimal(10, 2) // lo cobrado, con IGV incluido
   // total = opGravada + igv. Los precios ya incluyen el IGV: aquí queda separado lo que es
-  // de la botica (opGravada) de lo que se paga a SUNAT (igv). Ver src/common/igv.ts
+  // de la botica (opGravada) de lo que se paga a SUNAT (igv). Ver src/common/igv.js
   opGravada Decimal?       @map("op_gravada") @db.Decimal(10, 2)
   igv       Decimal?       @db.Decimal(10, 2)
   detalles  DetalleVenta[]
@@ -216,6 +222,8 @@ model Movimiento {
   usuarioId  Int            @map("usuario_id")
   usuario    Usuario        @relation(fields: [usuarioId], references: [id])
   motivo     String?
+  // Solo en una BAJA_VENCIMIENTO: si el lote se destruyó o se devolvió al proveedor
+  destinoBaja DestinoBaja?  @map("destino_baja")
   fecha      DateTime       @default(now())
 
   @@index([negocioId, fecha])

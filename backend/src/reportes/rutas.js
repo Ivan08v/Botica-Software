@@ -2,7 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { requiereRol } from "../auth/middleware.js";
 import { mensaje, validar } from "../validacion.js";
-import { reporteInventario, reporteVentas } from "./servicio.js";
+import { reporteBajas, reporteInventario, reporteVentas } from "./servicio.js";
 
 // Si se indica, el reporte trae solo los lotes vencidos o que vencen dentro de esos días.
 // Llega como texto en la URL (?venceEnDias=30): se convierte a número.
@@ -10,7 +10,8 @@ const esquemaInventario = z.strictObject({
   venceEnDias: z.coerce.number().int().min(0).max(3650).optional(),
 });
 
-const esquemaVentas = z.strictObject({
+// Período: lo usan el reporte de ventas y el de bajas
+const esquemaPeriodo = z.strictObject({
   desde: z
     .string({ error: mensaje("La fecha inicial debe tener el formato AAAA-MM-DD") })
     .regex(/^\d{4}-\d{2}-\d{2}$/, { error: mensaje("La fecha inicial debe tener el formato AAAA-MM-DD") }),
@@ -29,6 +30,11 @@ rutasReportes.get("/inventario", async (req, res) => {
 });
 
 rutasReportes.get("/ventas", async (req, res) => {
-  const { desde, hasta } = validar(esquemaVentas, req.query);
+  const { desde, hasta } = validar(esquemaPeriodo, req.query);
   res.json(await reporteVentas(req.usuario.negocioId, desde, hasta));
+});
+
+rutasReportes.get("/bajas", async (req, res) => {
+  const { desde, hasta } = validar(esquemaPeriodo, req.query);
+  res.json(await reporteBajas(req.usuario.negocioId, desde, hasta));
 });

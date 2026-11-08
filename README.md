@@ -35,7 +35,8 @@ Las capturas usan los datos de demostración del seed; los clientes que aparecen
 - **IGV**: los precios lo incluyen; en cada venta se separa la operación gravada del IGV (18 %) y se guardan los dos.
 - **Clientes**: registrar, buscar, editar y eliminar (solo si no tiene compras), con DNI, carné de extranjería o RUC y dirección fiscal; su ficha muestra cuántas veces compró, cuánto gastó y qué llevó.
 - **Ingreso de mercadería por lotes**, con número de lote, fecha de vencimiento, cantidad y costo.
-- **Reportes en Excel y PDF**: inventario valorizado, lotes por vencer y ventas por período con el IGV separado y la ganancia bruta sin IGV.
+- **Baja de lotes vencidos**: desde el panel, el dueño retira del inventario los lotes vencidos (uno o todos a la vez) indicando si se destruyen o se devuelven al proveedor, con una observación como el número de acta. Queda registrado quién lo hizo y la pérdida al costo, y tiene su propio reporte.
+- **Reportes en Excel y PDF**: inventario valorizado, lotes por vencer, ventas por período con el IGV separado y la ganancia bruta sin IGV, y bajas por vencimiento; cada uno con vista previa.
 - **Importación desde Excel** del inventario inicial, con vista previa y aviso de errores fila por fila.
 - **Productos** con búsqueda y lectura de código de barras desde la cámara.
 - **Dos roles**: `DUENO` (ve todo y configura) y `VENDEDOR` (registra ingresos y ventas).

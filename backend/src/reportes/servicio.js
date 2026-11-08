@@ -176,3 +176,69 @@ export async function reporteVentas(negocioId, desde, hasta) {
     filas,
   };
 }
+
+// Bajas de lotes vencidos en un período (días de Perú): qué se retiró, cómo y cuánto se perdió al costo
+export async function reporteBajas(negocioId, desde, hasta) {
+  if (!fechaExiste(desde) || !fechaExiste(hasta)) {
+    throw solicitudIncorrecta("Alguna de las fechas no existe");
+  }
+  if (hasta < desde) {
+    throw solicitudIncorrecta("La fecha final no puede ser anterior a la inicial");
+  }
+  const inicio = inicioDelDiaEnLima(desde);
+  const fin = inicioDelDiaEnLima(hasta);
+  fin.setUTCDate(fin.getUTCDate() + 1);
+  if ((fin.getTime() - inicio.getTime()) / 86_400_000 > MAXIMO_DIAS_VENTAS) {
+    throw solicitudIncorrecta("El período no puede ser mayor a un año");
+  }
+
+  const bajas = await prisma.movimiento.findMany({
+    where: { negocioId, tipo: "BAJA_VENCIMIENTO", fecha: { gte: inicio, lt: fin } },
+    include: {
+      producto: { select: { nombre: true, presentacion: true, laboratorio: true } },
+      lote: { select: { numeroLote: true, fechaVencimiento: true, costoUnitario: true } },
+      usuario: { select: { nombre: true } },
+    },
+    orderBy: [{ fecha: "asc" }, { id: "asc" }],
+  });
+
+  let valorTotal = cero();
+  let unidades = 0;
+  const porDestino = { DESTRUCCION: cero(), DEVOLUCION_PROVEEDOR: cero() };
+
+  const filas = bajas.map((b) => {
+    const cantidad = -b.cantidad; // el movimiento guarda la salida en negativo
+    const valor = b.lote.costoUnitario.mul(cantidad);
+    valorTotal = valorTotal.plus(valor);
+    unidades += cantidad;
+    porDestino[b.destinoBaja] = porDestino[b.destinoBaja].plus(valor);
+    return {
+      fecha: b.fecha.toISOString(),
+      dia: fechaEnLima(b.fecha),
+      producto: b.producto.nombre,
+      presentacion: b.producto.presentacion,
+      laboratorio: b.producto.laboratorio,
+      numeroLote: b.lote.numeroLote,
+      fechaVencimiento: b.lote.fechaVencimiento.toISOString().slice(0, 10),
+      cantidad,
+      costoUnitario: b.lote.costoUnitario.toFixed(2),
+      valor: valor.toFixed(2),
+      destino: b.destinoBaja,
+      observacion: b.motivo,
+      usuario: b.usuario.nombre,
+    };
+  });
+
+  return {
+    desde,
+    hasta,
+    resumen: {
+      lotes: filas.length,
+      unidades,
+      valor: valorTotal.toFixed(2),
+      destruccion: porDestino.DESTRUCCION.toFixed(2),
+      devolucionProveedor: porDestino.DEVOLUCION_PROVEEDOR.toFixed(2),
+    },
+    filas,
+  };
+}

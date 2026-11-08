@@ -3717,3 +3717,288 @@ kbd {
     flex: 1 1 100%;
   }
 }
+
+/* --- Baja de lotes vencidos --- */
+
+.boton-baja {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: 0.5rem;
+  padding: 0.2rem 0.55rem;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #b91c1c;
+  background: #fff;
+  border: 1px solid #fecaca;
+  border-radius: 0.4rem;
+  cursor: pointer;
+}
+
+.boton-baja:hover {
+  color: #fff;
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+.boton-baja .icono {
+  font-size: 0.95rem;
+  vertical-align: 0;
+}
+
+.boton-baja-todos {
+  margin-left: -0.6rem;
+}
+
+.aviso-cerrable {
+  display: flex;
+  align-items: center;
+  margin: 0;
+}
+
+.aviso-cerrable .boton-icono {
+  margin-left: auto;
+  color: inherit;
+  background: transparent;
+}
+
+.boton-peligro {
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+.boton-peligro:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+.dialogo-baja {
+  width: min(34rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  padding: 0;
+  color: var(--texto);
+  border: 0;
+  border-radius: 1rem;
+  box-shadow: 0 25px 50px -12px rgb(15 23 42 / 0.35);
+}
+
+.dialogo-baja::backdrop {
+  background: rgb(15 23 42 / 0.45);
+}
+
+.dialogo-baja form {
+  display: grid;
+  gap: 1rem;
+  padding: 1.5rem;
+}
+
+.dialogo-baja-cabecera {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+}
+
+.dialogo-baja-cabecera h2 {
+  display: block;
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.dialogo-baja-cabecera p {
+  margin: 0.15rem 0 0;
+  font-size: 0.8rem;
+}
+
+.dialogo-baja-cabecera .boton-icono {
+  margin-left: auto;
+}
+
+.dialogo-baja-icono {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2.5rem;
+  height: 2.5rem;
+  font-size: 1.4rem;
+  color: #b91c1c;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 0.6rem;
+}
+
+.dialogo-baja-icono .icono {
+  vertical-align: 0;
+}
+
+.dialogo-baja-lotes {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.6rem;
+}
+
+.dialogo-baja-lotes li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.82rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.dialogo-baja-lotes li:last-child {
+  border-bottom: 0;
+}
+
+.dialogo-baja-lotes li > span {
+  display: grid;
+  line-height: 1.35;
+}
+
+.dialogo-baja-lotes .tenue {
+  font-size: 0.75rem;
+}
+
+.dialogo-baja-lotes .num {
+  text-align: right;
+}
+
+.dialogo-baja-mas {
+  justify-content: center !important;
+}
+
+.dialogo-baja-totales {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.dialogo-baja-totales div {
+  padding: 0.6rem;
+  text-align: center;
+  background: #f8fafc;
+  border-radius: 0.5rem;
+}
+
+.dialogo-baja-totales dt {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--tenue);
+}
+
+.dialogo-baja-totales dd {
+  margin: 0.1rem 0 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.dialogo-baja-totales .perdida {
+  background: #fef2f2;
+}
+
+.dialogo-baja-totales .perdida dd {
+  color: #b91c1c;
+}
+
+.dialogo-baja-destinos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.dialogo-baja-destinos legend {
+  margin-bottom: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.dialogo-baja-destinos label {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.7rem;
+  font-weight: 400;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.6rem;
+  cursor: pointer;
+}
+
+.dialogo-baja-destinos label.elegido {
+  background: var(--primario-suave);
+  border-color: var(--primario);
+}
+
+/* El radio queda oculto (sin ocupar espacio): se elige tocando la tarjeta */
+.dialogo-baja-destinos input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.dialogo-baja-destinos label:focus-within {
+  outline: 3px solid #93ccff;
+}
+
+.dialogo-baja-destinos .icono {
+  flex: none;
+  width: 1.3rem;
+  overflow: hidden;
+  font-size: 1.3rem;
+  color: var(--primario);
+  vertical-align: 0;
+}
+
+.dialogo-baja-destinos label > span:last-child {
+  display: grid;
+  line-height: 1.3;
+}
+
+.dialogo-baja-destinos strong {
+  font-size: 0.85rem;
+}
+
+.dialogo-baja-destinos small {
+  font-size: 0.72rem;
+  color: var(--tenue);
+}
+
+@media (max-width: 30rem) {
+  .dialogo-baja-destinos {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dialogo-baja-observacion {
+  margin: 0;
+}
+
+.dialogo-baja .aviso {
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.dialogo-baja-pie {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+/* En celular el botón de baja de cada lote va debajo de su estado */
+@media (max-width: 40rem) {
+  .boton-baja {
+    margin: 0.35rem 0 0;
+  }
+}

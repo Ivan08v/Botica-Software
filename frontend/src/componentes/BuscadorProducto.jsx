@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { api, ErrorApi, mensajeDe } from '../api'
 import { useSesion } from '../sesion.jsx'
+import Icono from './Icono.jsx'
 
 // La librería de cámara es pesada: se descarga recién cuando alguien toca "Escanear"
 const Escaner = lazy(() => import('./Escaner.jsx'))
@@ -64,19 +65,23 @@ export default function BuscadorProducto({ alElegir }) {
   return (
     <div className="buscador">
       <div className="fila">
-        <input
-          type="search"
-          placeholder="Buscar producto por nombre o código"
-          value={texto}
-          onChange={(e) => {
-            setTexto(e.target.value)
-            setError('')
-            setSinRegistrar('')
-          }}
-          aria-label="Buscar producto"
-        />
-        <button type="button" className="boton secundario" onClick={() => setEscaneando(!escaneando)}>
-          Escanear
+        <span className="campo-con-icono">
+          <Icono nombre="search" />
+          <input
+            id="buscar-producto"
+            type="search"
+            placeholder="Buscar medicina por nombre, laboratorio o código de barras"
+            value={texto}
+            onChange={(e) => {
+              setTexto(e.target.value)
+              setError('')
+              setSinRegistrar('')
+            }}
+            aria-label="Buscar producto"
+          />
+        </span>
+        <button type="button" className="boton-suave con-icono" onClick={() => setEscaneando(!escaneando)}>
+          <Icono nombre="qr_code_scanner" /> Escanear
         </button>
       </div>
 

@@ -14,6 +14,13 @@ export class VentasController {
     return this.ventas.listar(usuario.negocioId);
   }
 
+  // Número que llevará la próxima boleta y la próxima factura (solo informativo: el número
+  // definitivo se asigna al registrar la venta, por si otra caja cobra antes)
+  @Get("proximo-comprobante")
+  proximoComprobante(@UsuarioActual() usuario: UsuarioToken) {
+    return this.ventas.proximoComprobante(usuario.negocioId);
+  }
+
   @Get(":id")
   obtener(@UsuarioActual() usuario: UsuarioToken, @Param("id", ParseIntPipe) id: number) {
     return this.ventas.obtener(usuario.negocioId, id);

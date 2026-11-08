@@ -6,6 +6,7 @@ import {
 } from "@nestjs/common";
 import type { UsuarioToken } from "../auth/decoradores";
 import { hoyEnLima } from "../common/fechas";
+import { igvDeLineas } from "../common/igv";
 import { Prisma, TipoComprobante } from "../generated/prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { RegistrarVentaDto } from "./dto/registrar-venta.dto";
@@ -47,6 +48,20 @@ export class VentasService {
       },
     });
     return ventas.map(conComprobante);
+  }
+
+  async proximoComprobante(negocioId: number) {
+    const ultimos = await this.prisma.venta.groupBy({
+      by: ["serie"],
+      where: { negocioId, serie: { in: Object.values(SERIES) } },
+      _max: { numero: true },
+    });
+    const siguiente = (tipo: TipoComprobante) => {
+      const serie = SERIES[tipo];
+      const ultimo = ultimos.find((u) => u.serie === serie)?._max.numero ?? 0;
+      return codigoComprobante(serie, ultimo + 1);
+    };
+    return { BOLETA: siguiente("BOLETA"), FACTURA: siguiente("FACTURA") };
   }
 
   async obtener(negocioId: number, id: number) {
@@ -139,11 +154,9 @@ export class VentasService {
         }
       }
 
-      // El precio se copia al detalle: si mañana cambia, la venta de hoy no se altera
-      const total = lineas.reduce(
-        (suma, l) => suma.plus(l.precioUnitario.mul(l.cantidad)),
-        new Prisma.Decimal(0),
-      );
+      // El precio se copia al detalle: si mañana cambia, la venta de hoy no se altera.
+      // Los precios incluyen IGV: se separa línea por línea lo que es de la botica y lo que es de SUNAT.
+      const { total, opGravada, igv } = igvDeLineas(lineas.map((l) => l.precioUnitario.mul(l.cantidad)));
       if (tipoComprobante === "BOLETA" && !cliente && total.greaterThan(LIMITE_BOLETA_ANONIMA)) {
         throw new BadRequestException(
           `Para una boleta de más de S/ ${LIMITE_BOLETA_ANONIMA} hay que identificar al cliente con su DNI`,
@@ -177,6 +190,8 @@ export class VentasService {
           usuarioId,
           clienteId: dto.clienteId,
           total,
+          opGravada,
+          igv,
           tipoComprobante,
           serie,
           numero,
@@ -210,7 +225,12 @@ function conComprobante<
 >(venta: V) {
   return {
     ...venta,
-    comprobante: venta.serie && venta.numero ? `${venta.serie}-${String(venta.numero).padStart(8, "0")}` : null,
+    comprobante: venta.serie && venta.numero ? codigoComprobante(venta.serie, venta.numero) : null,
     vuelto: venta.montoRecibido ? venta.montoRecibido.minus(venta.total).toFixed(2) : null,
   };
+}
+
+// "B001" y 12 -> "B001-00000012"
+function codigoComprobante(serie: string, numero: number) {
+  return `${serie}-${String(numero).padStart(8, "0")}`;
 }

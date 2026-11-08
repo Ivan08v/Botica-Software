@@ -99,6 +99,22 @@ describe("Comprobantes y medios de pago (e2e)", () => {
     expect(segunda.body.comprobante).toBe(`B001-${String(segunda.body.numero).padStart(8, "0")}`);
   });
 
+  it("separa el IGV incluido en el precio, línea por línea, y las partes suman el total", async () => {
+    const jarabe = await producto(4.5);
+    const tableta = await producto(0.3);
+    const venta = await vender({
+      items: [
+        { productoId: jarabe, cantidad: 2 },
+        { productoId: tableta, cantidad: 1 },
+      ],
+    }).expect(201);
+    // 9.00 -> 7.63 y 0.30 -> 0.25 sin IGV: op. gravada 7.88, IGV 1.42, total 9.30
+    expect(venta.body).toEqual(expect.objectContaining({ total: "9.3", opGravada: "7.88", igv: "1.42" }));
+
+    const guardada = await prisma.venta.findUniqueOrThrow({ where: { id: venta.body.id } });
+    expect(guardada.opGravada!.plus(guardada.igv!).equals(guardada.total)).toBe(true);
+  });
+
   it("la factura exige un cliente con RUC y tiene su propia serie F001", async () => {
     const productoId = await producto(10, 10);
     await vender({ tipoComprobante: "FACTURA", items: [{ productoId, cantidad: 1 }] }).expect(400);
@@ -113,11 +129,11 @@ describe("Comprobantes y medios de pago (e2e)", () => {
     const factura = await vender({
       tipoComprobante: "FACTURA",
       clienteId: clienteRuc,
-      medioPago: "TRANSFERENCIA",
+      medioPago: "TARJETA",
       items: [{ productoId, cantidad: 2 }],
     }).expect(201);
     expect(factura.body).toEqual(
-      expect.objectContaining({ serie: "F001", numero: 1, comprobante: "F001-00000001", medioPago: "TRANSFERENCIA" }),
+      expect.objectContaining({ serie: "F001", numero: 1, comprobante: "F001-00000001", medioPago: "TARJETA" }),
     );
     expect(factura.body.cliente).toEqual(expect.objectContaining({ tipoDocumento: "RUC", documento: "20512345678" }));
   });
@@ -144,10 +160,12 @@ describe("Comprobantes y medios de pago (e2e)", () => {
     expect(await stock(productoId)).toBe(7);
   });
 
-  it("el monto recibido solo va con efectivo, y el medio de pago debe ser uno conocido", async () => {
+  it("el monto recibido solo va con efectivo, y el medio de pago debe ser uno de la botica", async () => {
     const productoId = await producto(2);
     await vender({ medioPago: "YAPE", montoRecibido: 10, items: [{ productoId, cantidad: 1 }] }).expect(400);
     await vender({ medioPago: "BITCOIN", items: [{ productoId, cantidad: 1 }] }).expect(400);
+    // Una botica no cobra por transferencia: el valor existe solo por ventas antiguas
+    await vender({ medioPago: "TRANSFERENCIA", items: [{ productoId, cantidad: 1 }] }).expect(400);
     const yape = await vender({ medioPago: "YAPE", items: [{ productoId, cantidad: 1 }] }).expect(201);
     expect(yape.body.medioPago).toBe("YAPE");
   });
@@ -161,5 +179,37 @@ describe("Comprobantes y medios de pago (e2e)", () => {
     const numeros = respuestas.map((r) => r.body.numero as number).sort((a, b) => a - b);
     const desde = (antes._max.numero ?? 0) + 1;
     expect(numeros).toEqual(Array.from({ length: 10 }, (_, i) => desde + i));
+  });
+
+  const pedir = (ruta: string) =>
+    request(app.getHttpServer()).get(ruta).set("Authorization", `Bearer ${token}`);
+
+  it("informa el número que llevará la próxima boleta y la próxima factura", async () => {
+    const res = await pedir("/ventas/proximo-comprobante").expect(200);
+    const ultimas = await prisma.venta.groupBy({ by: ["serie"], where: { negocioId }, _max: { numero: true } });
+    const siguiente = (serie: string) => {
+      const ultimo = ultimas.find((u) => u.serie === serie)?._max.numero ?? 0;
+      return `${serie}-${String(ultimo + 1).padStart(8, "0")}`;
+    };
+    expect(res.body).toEqual({ BOLETA: siguiente("B001"), FACTURA: siguiente("F001") });
+  });
+
+  it("los productos frecuentes son los más vendidos, con stock y con el lote que sale primero", async () => {
+    const res = await pedir("/productos/frecuentes").expect(200);
+    expect(res.body.length).toBeGreaterThan(0);
+    expect(res.body.length).toBeLessThanOrEqual(6);
+    // Ordenados de más a menos vendido en los últimos 30 días
+    const vendidos = await prisma.detalleVenta.groupBy({
+      by: ["productoId"],
+      where: { productoId: { in: res.body.map((p: { id: number }) => p.id) } },
+      _sum: { cantidad: true },
+    });
+    const cantidad = (id: number) => vendidos.find((v) => v.productoId === id)?._sum.cantidad ?? 0;
+    const cantidades = res.body.map((p: { id: number }) => cantidad(p.id));
+    expect(cantidades).toEqual([...cantidades].sort((a: number, b: number) => b - a));
+    for (const p of res.body) {
+      expect(p.stock).toBeGreaterThan(0);
+      expect(p.proximoLote).toEqual(expect.objectContaining({ numeroLote: "CP-1" }));
+    }
   });
 });

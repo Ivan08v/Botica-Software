@@ -518,20 +518,447 @@ a:focus-visible {
 /* --- Login --- */
 
 .login {
+  display: flex;
+  flex-direction: column;
   min-height: 100dvh;
+  background: #f8fafc;
+}
+
+.login-principal {
+  position: relative;
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  /* Cuadrícula muy suave de fondo, como papel milimetrado */
+  background-color: rgb(240 249 255 / 0.4);
+  background-image:
+    linear-gradient(to right, rgb(2 132 199 / 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(2 132 199 / 0.04) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* Panel azul de presentación: solo en escritorio */
+.login-presentacion {
+  position: relative;
+  display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 50%;
+  padding: 3rem 3.5rem;
+  overflow: hidden;
+  color: #fff;
+  background: linear-gradient(to bottom right, #0369a1, #0284c7, #0ea5e9);
+  box-shadow: 0 25px 50px -12px rgb(15 23 42 / 0.25);
+}
+
+.login-presentacion::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 80% 80% at 50% -20%, rgb(255 255 255 / 0.22), transparent);
+  pointer-events: none;
+}
+
+.login-presentacion > * {
+  position: relative;
+}
+
+@media (min-width: 64rem) {
+  .login-presentacion {
+    display: flex;
+  }
+}
+
+.login-marca,
+.login-marca-movil {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.login-marca > span:last-child,
+.login-marca-movil > span:last-child {
+  display: grid;
+  line-height: 1.25;
+}
+
+.login-marca strong {
+  font-family: "Plus Jakarta Sans", Inter, sans-serif;
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.login-marca small {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #e0f2fe;
+}
+
+.login-logo {
   display: grid;
   place-items: center;
-  padding: 1rem;
+  flex: none;
+  width: 2.75rem;
+  height: 2.75rem;
+  font-size: 1.6rem;
+  color: #fff;
+  background: rgb(255 255 255 / 0.2);
+  border-radius: 0.75rem;
+  box-shadow: 0 0 0 2px rgb(255 255 255 / 0.4), 0 8px 16px rgb(0 0 0 / 0.1);
+  transition: transform 0.3s ease-out;
 }
 
-.login .tarjeta {
-  width: 100%;
-  max-width: 24rem;
-  padding: 1.5rem;
+.login-logo:hover {
+  transform: scale(1.08) rotate(-3deg);
 }
 
-.login .boton {
+.login-logo .icono {
+  vertical-align: 0;
+}
+
+.login-mensaje {
+  max-width: 32rem;
+  margin: auto 0;
+  padding: 3rem 0;
+}
+
+.login-pastilla {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: rgb(255 255 255 / 0.15);
+  border: 1px solid rgb(255 255 255 / 0.25);
+  border-radius: 999px;
+}
+
+.punto-vivo {
+  width: 0.5rem;
+  height: 0.5rem;
+  background: #6ee7b7;
+  border-radius: 50%;
+  animation: latido 2s ease-in-out infinite;
+}
+
+@keyframes latido {
+  50% {
+    opacity: 0.4;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .punto-vivo {
+    animation: none;
+  }
+}
+
+.login-mensaje h1 {
+  margin: 0;
+  font-size: 2.25rem;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.login-mensaje > p {
+  margin: 1rem 0 0;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #e0f2fe;
+}
+
+.login-funciones {
+  display: grid;
+  gap: 1rem;
+  margin: 2rem 0 0;
+  padding: 1.5rem 0 0;
+  list-style: none;
+  border-top: 1px solid rgb(255 255 255 / 0.2);
+}
+
+.login-funciones li {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.login-funciones li > span:last-child {
+  display: grid;
+  line-height: 1.35;
+}
+
+.login-funciones strong {
+  font-size: 0.85rem;
+}
+
+.login-funciones small {
+  font-size: 0.78rem;
+  color: #e0f2fe;
+}
+
+.login-funcion-icono {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2.5rem;
+  height: 2.5rem;
+  font-size: 1.3rem;
+  background: rgb(255 255 255 / 0.15);
+  border: 1px solid rgb(255 255 255 / 0.25);
+  border-radius: 0.6rem;
+}
+
+.login-funcion-icono .icono {
+  vertical-align: 0;
+}
+
+.login-pie-panel {
+  margin: 0;
+  padding-top: 1.5rem;
+  font-size: 0.78rem;
+  color: #e0f2fe;
+  border-top: 1px solid rgb(255 255 255 / 0.2);
+}
+
+/* Lado del formulario */
+.login-lado-formulario {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 1rem;
+}
+
+.login-tarjeta {
   width: 100%;
+  max-width: 28rem;
+  padding: 1.75rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  box-shadow: 0 20px 25px -5px rgb(226 232 240 / 0.6), 0 8px 10px -6px rgb(226 232 240 / 0.6);
+}
+
+@media (min-width: 40rem) {
+  .login-tarjeta {
+    padding: 2rem;
+  }
+}
+
+.login-marca-movil {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.login-marca-movil .login-logo {
+  background: linear-gradient(to top right, #0284c7, #0ea5e9, #38bdf8);
+  box-shadow: 0 0 0 2px #f0f9ff, 0 4px 10px rgb(14 165 233 / 0.25);
+}
+
+.login-marca-movil strong {
+  font-family: "Plus Jakarta Sans", Inter, sans-serif;
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.login-marca-movil small {
+  font-size: 0.75rem;
+  color: var(--tenue);
+}
+
+/* En escritorio el panel azul ya muestra la marca */
+@media (min-width: 64rem) {
+  .login-marca-movil {
+    display: none;
+  }
+}
+
+.login-encabezado {
+  margin-bottom: 1.5rem;
+}
+
+.login-etiqueta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.4rem;
+  padding: 0.1rem 0.6rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #0284c7;
+  background: #f0f9ff;
+  border: 1px solid #e0f2fe;
+  border-radius: 0.375rem;
+}
+
+.login-etiqueta .punto,
+.login-demo .punto {
+  width: 0.4rem;
+  height: 0.4rem;
+  background: #0ea5e9;
+}
+
+.login-encabezado h2 {
+  display: block;
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.login-encabezado .tenue {
+  margin: 0.25rem 0 0;
+}
+
+.login-campo {
+  margin-bottom: 1rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #334155;
+}
+
+.login-campo .campo-con-icono input {
+  padding-top: 0.65rem;
+  padding-bottom: 0.65rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  border-color: #cbd5e1;
+}
+
+.login-campo .campo-con-icono input:focus {
+  border-color: #0284c7;
+  box-shadow: 0 0 0 3px rgb(14 165 233 / 0.2);
+  outline: none;
+}
+
+.campo-con-icono.con-boton input {
+  padding-right: 2.75rem;
+}
+
+.ver-password {
+  position: absolute;
+  top: 50%;
+  right: 0.5rem;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  font-size: 1.2rem;
+  color: #94a3b8;
+  background: none;
+  border: 0;
+  border-radius: 0.4rem;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+
+.ver-password:hover {
+  color: #475569;
+}
+
+.ver-password .icono {
+  vertical-align: 0;
+}
+
+.login-boton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.8rem 1rem;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(to right, #0284c7, #0ea5e9, #0ea5e9);
+  border: 0;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 10px rgb(14 165 233 / 0.3);
+  cursor: pointer;
+  transition: box-shadow 0.15s;
+}
+
+.login-boton:hover:not(:disabled) {
+  background: linear-gradient(to right, #0369a1, #0284c7);
+  box-shadow: 0 8px 18px rgb(14 165 233 / 0.4);
+}
+
+.login-boton .icono {
+  transition: transform 0.15s;
+}
+
+.login-boton:hover:not(:disabled) .icono {
+  transform: translateX(3px);
+}
+
+.login-boton:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.login-tarjeta .aviso {
+  margin: 0 0 0.75rem;
+}
+
+.login-demo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #075985;
+  background: #f0f9ff;
+  border: 1px solid #e0f2fe;
+  border-radius: 0.5rem;
+}
+
+.login-demo > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.login-demo button {
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  color: #0369a1;
+  text-decoration: underline;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.login-pie {
+  padding: 0.75rem 1.5rem;
+  font-size: 0.75rem;
+  color: var(--tenue);
+  text-align: center;
+  background: #fff;
+  border-top: 1px solid #e2e8f0;
+}
+
+.login-pie strong {
+  color: #334155;
 }
 
 /* --- Listas --- */
@@ -1893,16 +2320,16 @@ h2.subtitulo {
   box-shadow: 0 1px 3px rgb(11 28 48 / 0.12);
 }
 
-/* Los 5 medios en una fila; en pantallas muy angostas pasan a 3 por fila */
+/* Los 4 medios en una fila; en pantallas muy angostas, 2 por fila */
 .medios-pago {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.4rem;
 }
 
 @media (max-width: 22rem) {
   .medios-pago {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -2278,4 +2705,702 @@ h2.subtitulo {
   .tabla-clientes td.compras {
     display: none;
   }
+}
+
+/* --- Caja v2: diseño de "Ventas y caja" --- */
+
+/* Barra superior: subtítulo y atajos de teclado (solo en escritorio) */
+.barra-superior-titulo small {
+  font-size: 0.75rem;
+  color: var(--tenue);
+}
+
+.solo-escritorio-bloque {
+  display: none;
+}
+
+@media (min-width: 64rem) {
+  .solo-escritorio-bloque {
+    display: block;
+  }
+}
+
+.atajos {
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--tenue);
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+}
+
+.atajos > span + span {
+  padding-left: 0.6rem;
+  border-left: 1px solid #cbd5e1;
+}
+
+kbd {
+  display: inline-block;
+  padding: 0.05rem 0.35rem;
+  font: 600 0.7rem Inter, system-ui, sans-serif;
+  color: #334155;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.25rem;
+  box-shadow: 0 1px 0 #e2e8f0;
+}
+
+/* Columnas: en escritorio la caja ocupa el alto de la pantalla; la lista de productos
+   y el panel de cobro tienen su propio desplazamiento */
+.caja-izquierda {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+
+@media (min-width: 64rem) {
+  .caja {
+    grid-template-columns: minmax(0, 1fr) 24rem;
+    height: calc(100dvh - 4rem - 3rem);
+  }
+
+  .caja-izquierda {
+    height: 100%;
+  }
+
+  .caja-carrito {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .caja-carrito .carrito {
+    overflow-y: auto;
+  }
+
+  .caja-cobro {
+    position: static;
+    max-height: 100%;
+    overflow-y: auto;
+  }
+}
+
+.caja .tarjeta {
+  border-color: #e2e8f0;
+  border-radius: 1rem;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
+}
+
+/* Buscador con ícono y botón de escanear */
+.caja-buscador {
+  padding: 0.85rem;
+}
+
+.campo-con-icono {
+  position: relative;
+  display: block;
+  flex: 1;
+  min-width: 0;
+}
+
+.campo-con-icono > .icono {
+  position: absolute;
+  top: 50%;
+  left: 0.85rem;
+  font-size: 1.25rem;
+  color: #94a3b8;
+  transform: translateY(-50%);
+  vertical-align: 0;
+  pointer-events: none;
+}
+
+.campo-con-icono input {
+  padding-left: 2.75rem;
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  border-radius: 0.75rem;
+}
+
+.campo-con-icono input:focus {
+  background: #fff;
+  border-color: #0ea5e9;
+}
+
+.boton-suave {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex: none;
+  padding: 0.65rem 1rem;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  color: #0369a1;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 0.75rem;
+  cursor: pointer;
+}
+
+.boton-suave:hover {
+  background: #e0f2fe;
+}
+
+/* Lista de productos de la venta */
+.caja-carrito {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+
+.caja-carrito-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #334155;
+  background: #f8fafc;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.boton-texto.peligro {
+  font-size: 0.75rem;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #f43f5e;
+}
+
+.boton-texto.peligro:hover {
+  color: #be123c;
+  background: #fff1f2;
+}
+
+.caja-carrito .carrito-vacio {
+  margin: 1.25rem;
+}
+
+.caja-carrito .carrito {
+  margin: 0;
+  padding: 0 1.25rem;
+}
+
+.carrito li {
+  gap: 0.5rem 1rem;
+  padding: 0.85rem 0.5rem;
+  margin: 0 -0.5rem;
+  border-bottom-color: #f1f5f9;
+  border-radius: 0.75rem;
+}
+
+.carrito li:hover {
+  background: #f8fafc;
+}
+
+.carrito-nombre {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.carrito-nombre strong {
+  overflow: hidden;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.carrito-nombre .chip {
+  font-size: 0.65rem;
+  font-weight: 500;
+}
+
+.carrito-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.carrito-meta strong {
+  font-weight: 400;
+  color: #475569;
+}
+
+.carrito-meta > span + span::before {
+  content: "•";
+  margin-right: 0.75rem;
+  color: #cbd5e1;
+}
+
+.texto-exito {
+  font-weight: 500;
+  color: #059669;
+}
+
+.contador-cantidad {
+  gap: 0.3rem;
+  padding: 0.2rem;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+}
+
+.contador-cantidad button {
+  width: 1.6rem;
+  height: 1.6rem;
+  font-size: 0.95rem;
+  color: #475569;
+  background: #fff;
+  border-radius: 0.375rem;
+  box-shadow: 0 1px 1px rgb(15 23 42 / 0.06);
+}
+
+.contador-cantidad button:hover:not(:disabled) {
+  background: #f8fafc;
+}
+
+.contador-cantidad input {
+  width: 2.25rem;
+  font-size: 0.8rem;
+}
+
+.carrito-precio {
+  display: grid;
+  min-width: 5.5rem;
+  text-align: right;
+  line-height: 1.3;
+}
+
+.carrito-precio small {
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
+.carrito-precio strong {
+  font-size: 0.9rem;
+}
+
+.carrito .boton-icono.peligro {
+  color: #cbd5e1;
+  background: none;
+}
+
+.carrito .boton-icono.peligro:hover {
+  color: #f43f5e;
+  background: #fff1f2;
+}
+
+/* Accesos rápidos: los más vendidos */
+.caja-comunes {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem;
+}
+
+.caja-comunes-titulo {
+  flex: none;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.caja-comunes-lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.caja-comunes-lista button {
+  padding: 0.35rem 0.75rem;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #334155;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+.caja-comunes-lista button:hover {
+  color: #0369a1;
+  background: #f0f9ff;
+  border-color: #bae6fd;
+}
+
+/* Panel de cobro */
+.caja-cobro {
+  padding: 1.25rem;
+}
+
+.caja-cobro-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-bottom: 0.9rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.caja-cobro-cabecera .icono {
+  color: #0284c7;
+}
+
+.numero-proximo {
+  font: 500 0.72rem ui-monospace, "Cascadia Mono", Consolas, monospace;
+  color: #94a3b8;
+}
+
+.caja-cobro .paso {
+  border-top-color: #f1f5f9;
+}
+
+.caja-cobro .paso-titulo {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.caja-cobro .segmentado {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+}
+
+.caja-cobro .segmentado button {
+  padding: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #475569;
+}
+
+.caja-cobro .segmentado button[aria-checked="true"] {
+  font-weight: 700;
+  color: #0369a1;
+  border: 1px solid #e2e8f0;
+}
+
+.segmentado.chico {
+  margin-top: 0.1rem;
+}
+
+.enlace-chico {
+  padding: 0;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #0284c7;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.enlace-chico:hover {
+  text-decoration: underline;
+}
+
+/* Medios de pago: Efectivo (verde), Tarjeta (azul marino), Yape / Plin (sus colores) */
+.caja-cobro .medios-pago {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.caja-cobro .medios-pago button {
+  position: relative;
+  gap: 0.25rem;
+  padding: 0.65rem 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 0.75rem;
+  transition: transform 0.1s;
+}
+
+.caja-cobro .medios-pago button:hover {
+  transform: scale(1.02);
+}
+
+.caja-cobro .medios-pago .icono {
+  font-size: 1.3rem;
+}
+
+.medios-pago .medio-efectivo {
+  color: #047857;
+  background: #fff;
+  border: 1px solid #a7f3d0;
+}
+
+.medios-pago .medio-efectivo[aria-checked="true"] {
+  color: #065f46;
+  background: #ecfdf5;
+  border: 2px solid #10b981;
+}
+
+.medios-pago .medio-tarjeta {
+  color: #fff;
+  background: #1e3a8a;
+  border: 2px solid #1d4ed8;
+}
+
+.medios-pago .medio-tarjeta[aria-checked="true"] {
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 2px #1e3a8a;
+}
+
+.medios-pago .medio-billetera {
+  color: #475569;
+  background: linear-gradient(135deg, #f3d5fb 48%, #bdf8f2 52%);
+  border: 1px solid #840a9c;
+}
+
+.medios-pago .medio-billetera[aria-checked="true"] {
+  border-width: 2px;
+  box-shadow: 0 0 0 2px #f3d5fb;
+}
+
+.puntos-billetera {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: #65057a;
+}
+
+.punto-yape,
+.punto-plin {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+}
+
+.punto-yape {
+  background: #840a9c;
+}
+
+.punto-plin {
+  background: #00bfae;
+}
+
+.texto-yape {
+  font-weight: 800;
+  color: #742284;
+}
+
+.texto-plin {
+  font-weight: 800;
+  color: #009386;
+}
+
+.marca-elegido {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+  display: grid;
+  place-items: center;
+  width: 1rem;
+  height: 1rem;
+  font-size: 0.7rem;
+  color: #fff;
+  background: #059669;
+  border-radius: 50%;
+}
+
+.caja-cobro .medios-pago .marca-elegido .icono {
+  font-size: 0.75rem;
+  font-variation-settings: "wght" 700;
+}
+
+/* Efectivo: monto recibido y vuelto */
+.caja-efectivo {
+  display: grid;
+  gap: 0.6rem;
+  margin-bottom: 0.85rem;
+  padding: 0.85rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+}
+
+.caja-efectivo-fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #475569;
+}
+
+.caja-efectivo .recibido {
+  width: 8rem;
+}
+
+.caja-efectivo .recibido input {
+  padding: 0.35rem 0.6rem 0.35rem 2rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-align: right;
+}
+
+.caja-efectivo .recibido .prefijo {
+  left: 0.6rem;
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.vuelto-entregar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0.75rem;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 0.5rem;
+}
+
+.vuelto-entregar span {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #047857;
+}
+
+.vuelto-entregar strong {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #059669;
+}
+
+/* Totales */
+.caja-cobro .resumen-cobro {
+  font-size: 0.8rem;
+  border-top-color: #f1f5f9;
+}
+
+.total-a-pagar {
+  align-items: baseline;
+  padding-top: 0.4rem;
+}
+
+.total-a-pagar dt {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--texto) !important;
+}
+
+.total-a-pagar dd {
+  font-family: "Plus Jakarta Sans", Inter, sans-serif;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #0369a1;
+}
+
+/* Botón principal: cobrar e imprimir */
+.caja-cobro .boton-cobrar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  width: 100%;
+  margin-top: 0.25rem;
+  padding: 0.95rem;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #fff;
+  background: linear-gradient(to top right, #0284c7, #06b6d4);
+  border: 0;
+  border-radius: 0.75rem;
+  box-shadow: 0 8px 18px rgb(2 132 199 / 0.25);
+  cursor: pointer;
+}
+
+.caja-cobro .boton-cobrar:hover:not(:disabled) {
+  background: linear-gradient(to top right, #0369a1, #0891b2);
+}
+
+.caja-cobro .boton-cobrar:active:not(:disabled) {
+  transform: scale(0.99);
+}
+
+.caja-cobro .boton-cobrar:disabled {
+  opacity: 0.45;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* Pie fijo del panel de cobro y campos más compactos dentro del panel */
+.caja-cobro {
+  display: flex;
+  flex-direction: column;
+}
+
+.caja-cobro-pie {
+  position: sticky;
+  bottom: -1.25rem;
+  margin: auto -1.25rem -1.25rem;
+  padding: 0.25rem 1.25rem 1.25rem;
+  background: var(--superficie);
+  border-top: 1px solid #f1f5f9;
+}
+
+.caja-cobro-pie .aviso {
+  margin: 0.6rem 0 0;
+}
+
+.caja-cobro-pie .resumen-cobro {
+  border-top: 0;
+}
+
+.caja-cobro .cliente-venta input {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  border-radius: 0.75rem;
+}
+
+.caja-cobro .cliente-venta .fila > .boton {
+  padding: 0.5rem 0.85rem;
+  font-size: 0.8rem;
+  color: #0369a1;
+  background: #f0f9ff;
+  border-color: #bae6fd;
+  border-radius: 0.75rem;
+}
+
+.caja-cobro .cliente-venta .aviso.pendiente {
+  gap: 0.4rem;
+  font-size: 0.8rem;
+}
+
+.caja-cobro .cliente-venta .aviso label {
+  margin-bottom: 0.4rem;
+  font-size: 0.78rem;
+}
+
+.caja-cobro .cliente-venta .aviso .boton {
+  padding: 0.55rem;
+  font-size: 0.85rem;
+}
+
+.caja-carrito-cabecera .boton-texto {
+  flex: none;
+  white-space: nowrap;
 }

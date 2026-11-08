@@ -4,6 +4,7 @@ import {
   ArrayNotEmpty,
   IsArray,
   IsEnum,
+  IsIn,
   IsInt,
   IsNumber,
   IsOptional,
@@ -11,6 +12,8 @@ import {
   ValidateNested,
 } from "class-validator";
 import { MedioPago, TipoComprobante } from "../../generated/prisma/client";
+
+export const MEDIOS_PAGO_ACEPTADOS: MedioPago[] = ["EFECTIVO", "TARJETA", "YAPE", "PLIN"];
 
 export class ItemVentaDto {
   @IsInt()
@@ -38,8 +41,10 @@ export class RegistrarVentaDto {
   @IsEnum(TipoComprobante, { message: "El comprobante debe ser BOLETA o FACTURA" })
   tipoComprobante?: TipoComprobante;
 
+  // En el mostrador de una botica se paga en efectivo, con tarjeta o con Yape/Plin.
+  // TRANSFERENCIA sigue en la base solo para las ventas antiguas que lo tienen.
   @IsOptional()
-  @IsEnum(MedioPago, { message: "El medio de pago debe ser EFECTIVO, TARJETA, YAPE, PLIN o TRANSFERENCIA" })
+  @IsIn(MEDIOS_PAGO_ACEPTADOS, { message: "El medio de pago debe ser EFECTIVO, TARJETA, YAPE o PLIN" })
   medioPago?: MedioPago;
 
   // Solo en efectivo: con cuánto paga el cliente, para calcular el vuelto

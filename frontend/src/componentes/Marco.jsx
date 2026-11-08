@@ -7,16 +7,28 @@ import Icono from './Icono.jsx'
 // `titulo` va en el menú lateral y en la barra superior; `corto`, en el menú de abajo del celular.
 const MODULOS = [
   { ruta: '/panel', titulo: 'Panel de control', corto: 'Panel', icono: 'dashboard', soloDueno: true },
-  { ruta: '/venta', titulo: 'Ventas', corto: 'Venta', icono: 'point_of_sale' },
+  {
+    ruta: '/venta',
+    titulo: 'Ventas y caja',
+    subtitulo: 'Cobro, boletas y facturas del mostrador',
+    corto: 'Venta',
+    icono: 'point_of_sale',
+    // Atajos de teclado de la caja (los atiende la pantalla de venta)
+    atajos: [
+      ['F2', 'Nueva venta'],
+      ['F4', 'Buscar'],
+      ['F9', 'Cobrar'],
+    ],
+  },
   { ruta: '/ingreso', titulo: 'Ingreso de lotes', corto: 'Ingreso', icono: 'move_to_inbox' },
   { ruta: '/productos', titulo: 'Productos y stock', corto: 'Productos', icono: 'inventory_2' },
   { ruta: '/clientes', titulo: 'Clientes', corto: 'Clientes', icono: 'group' },
   { ruta: '/reportes', titulo: 'Reportes', corto: 'Reportes', icono: 'receipt_long', soloDueno: true },
 ]
 
-function tituloDe(ruta) {
-  if (ruta === '/productos/importar') return 'Importar inventario'
-  return MODULOS.find((m) => ruta.startsWith(m.ruta))?.titulo ?? ''
+function moduloDe(ruta) {
+  if (ruta === '/productos/importar') return { titulo: 'Importar inventario' }
+  return MODULOS.find((m) => ruta.startsWith(m.ruta)) ?? { titulo: '' }
 }
 
 // Estructura común a todas las pantallas: menú lateral en escritorio, menú abajo en celular
@@ -28,6 +40,7 @@ export default function Marco() {
   const esDueno = sesion.usuario.rol === 'DUENO'
   const modulos = MODULOS.filter((m) => esDueno || !m.soloDueno)
   const rol = esDueno ? 'Dueño(a)' : 'Vendedor(a)'
+  const actual = moduloDe(pathname)
 
   return (
     <div className="marco">
@@ -75,10 +88,20 @@ export default function Marco() {
             </span>
             <span>
               <strong className="solo-movil-bloque">{sesion.negocio.nombre}</strong>
-              <h1>{tituloDe(pathname)}</h1>
+              <h1>{actual.titulo}</h1>
+              {actual.subtitulo && <small className="solo-escritorio-bloque">{actual.subtitulo}</small>}
             </span>
           </div>
           <div className="barra-superior-acciones">
+            {actual.atajos && (
+              <span className="atajos solo-escritorio-flex" aria-label="Atajos de teclado">
+                {actual.atajos.map(([tecla, accion]) => (
+                  <span key={tecla}>
+                    <kbd>{tecla}</kbd> {accion}
+                  </span>
+                ))}
+              </span>
+            )}
             {/* La dueña va al panel con el detalle; el vendedor, a productos (ve el stock bajo) */}
             <AvisoAlertas destino={esDueno ? '/panel' : '/productos'} />
             {pathname !== '/venta' && (

@@ -46,6 +46,8 @@ export async function api(ruta, opciones = {}) {
     throw new ErrorApi(0, 'No se pudo conectar con el servidor. Revisa tu conexión.')
   }
 
+  // 204 (por ejemplo al eliminar) es un éxito sin cuerpo: no hay JSON que leer
+  if (respuesta.status === 204) return null
   if (respuesta.ok) return await respuesta.json()
 
   // 502, 503 y 504 no vienen del backend sino de lo que está delante (el proxy de Vite o el

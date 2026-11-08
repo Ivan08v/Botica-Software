@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { fechaEnLima, hoyEnLima, inicioDelDiaEnLima } from "../common/fechas";
+import { separarIgv } from "../common/igv";
 import { Prisma } from "../generated/prisma/client";
 import { diasRestantes, tramoDe } from "../panel/tramos";
 import { PrismaService } from "../prisma/prisma.service";
@@ -119,15 +120,20 @@ export class ReportesService {
     });
 
     let total = cero();
+    let opGravada = cero();
     let costo = cero();
     let unidades = 0;
     const ventas = new Set<number>();
 
     const filas = detalles.map((d) => {
       const subtotal = d.precioUnitario.mul(d.cantidad);
-      // Ganancia bruta: lo cobrado menos lo que costó ese lote exacto (gracias a FEFO se sabe cuál)
+      // El IGV incluido en el precio no es de la botica (se paga a SUNAT): se quita antes de calcular
+      // la ganancia. Se separa por línea, igual que al registrar la venta (src/common/igv.ts).
+      const { valorVenta, igv } = separarIgv(subtotal);
+      // Ganancia bruta: valor de venta (sin IGV) menos lo que costó ese lote exacto (gracias a FEFO se sabe cuál)
       const costoLinea = d.lote.costoUnitario.mul(d.cantidad);
       total = total.plus(subtotal);
+      opGravada = opGravada.plus(valorVenta);
       costo = costo.plus(costoLinea);
       unidades += d.cantidad;
       ventas.add(d.ventaId);
@@ -142,8 +148,10 @@ export class ReportesService {
         cantidad: d.cantidad,
         precioUnitario: d.precioUnitario.toFixed(2),
         subtotal: subtotal.toFixed(2),
+        valorVenta: valorVenta.toFixed(2),
+        igv: igv.toFixed(2),
         costo: costoLinea.toFixed(2),
-        ganancia: subtotal.minus(costoLinea).toFixed(2),
+        ganancia: valorVenta.minus(costoLinea).toFixed(2),
       };
     });
 
@@ -153,9 +161,11 @@ export class ReportesService {
       resumen: {
         ventas: ventas.size,
         unidades,
-        total: total.toFixed(2),
+        total: total.toFixed(2), // lo cobrado, con IGV
+        opGravada: opGravada.toFixed(2), // lo cobrado sin IGV
+        igv: total.minus(opGravada).toFixed(2), // lo que se paga a SUNAT
         costo: costo.toFixed(2),
-        ganancia: total.minus(costo).toFixed(2),
+        ganancia: opGravada.minus(costo).toFixed(2),
       },
       filas,
     };

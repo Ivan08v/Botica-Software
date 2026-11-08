@@ -46,7 +46,7 @@ enum MedioPago {
   TARJETA
   YAPE
   PLIN
-  TRANSFERENCIA
+  TRANSFERENCIA // ya no se acepta en ventas nuevas; se conserva por las ventas antiguas
 }
 
 // Cada botica o veterinaria que usa el sistema
@@ -162,7 +162,11 @@ model Venta {
   clienteId Int?           @map("cliente_id")
   // Restrict: la base no deja eliminar un cliente que tiene ventas
   cliente   Cliente?       @relation(fields: [clienteId], references: [id], onDelete: Restrict)
-  total     Decimal        @db.Decimal(10, 2)
+  total     Decimal        @db.Decimal(10, 2) // lo cobrado, con IGV incluido
+  // total = opGravada + igv. Los precios ya incluyen el IGV: aquí queda separado lo que es
+  // de la botica (opGravada) de lo que se paga a SUNAT (igv). Ver src/common/igv.ts
+  opGravada Decimal?       @map("op_gravada") @db.Decimal(10, 2)
+  igv       Decimal?       @db.Decimal(10, 2)
   detalles  DetalleVenta[]
 
   tipoComprobante TipoComprobante @default(BOLETA) @map("tipo_comprobante")

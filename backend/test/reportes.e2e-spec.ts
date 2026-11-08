@@ -108,7 +108,20 @@ describe("Reportes (e2e)", () => {
       ["2026-09-30", "A-PRONTO", 3],
     ]);
     // Total 2x5 + 3x6 = 28 ; costo 2x2 + 3x3 = 13
-    expect(res.body.resumen).toEqual({ ventas: 2, unidades: 5, total: "28.00", costo: "13.00", ganancia: "15.00" });
+    // Sin IGV, línea por línea: 10 / 1.18 = 8.47 y 18 / 1.18 = 15.25 -> 23.72 (IGV 4.28)
+    // La ganancia se calcula sin el IGV, que no es de la botica: 23.72 - 13 = 10.72
+    expect(res.body.resumen).toEqual({
+      ventas: 2,
+      unidades: 5,
+      total: "28.00",
+      opGravada: "23.72",
+      igv: "4.28",
+      costo: "13.00",
+      ganancia: "10.72",
+    });
+    expect(res.body.filas[0]).toEqual(
+      expect.objectContaining({ subtotal: "10.00", valorVenta: "8.47", igv: "1.53", costo: "4.00", ganancia: "4.47" }),
+    );
   });
 
   it("ventas: un período de varios días incluye ambos extremos", async () => {

@@ -30,6 +30,12 @@ export class ProductosController {
     return this.productos.listar(usuario.negocioId, buscar, incluirInactivos);
   }
 
+  // Antes de ":id" para que "frecuentes" no se lea como un id
+  @Get("frecuentes")
+  frecuentes(@UsuarioActual() usuario: UsuarioToken) {
+    return this.productos.frecuentes(usuario.negocioId);
+  }
+
   @Get("codigo/:codigoBarras")
   obtenerPorCodigo(
     @UsuarioActual() usuario: UsuarioToken,

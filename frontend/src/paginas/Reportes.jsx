@@ -124,9 +124,12 @@ export default function Reportes() {
       resumen: [
         ['Ventas', String(r.ventas)],
         ['Unidades', String(r.unidades)],
-        ['Total vendido', soles(r.total)],
+        ['Total cobrado (con IGV)', soles(r.total)],
+        ['IGV a pagar a SUNAT (18 %)', soles(r.igv)],
+        ['Venta sin IGV', soles(r.opGravada)],
         ['Costo', soles(r.costo)],
-        ['Ganancia bruta', soles(r.ganancia)],
+        // Sin el IGV: ese dinero se cobra al cliente pero no es de la botica
+        ['Ganancia bruta (sin IGV)', soles(r.ganancia)],
       ],
       columnas: [
         { titulo: 'Fecha', tipo: 'fecha', ancho: 12 },
@@ -139,6 +142,8 @@ export default function Reportes() {
         { titulo: 'Cantidad', tipo: 'entero' },
         { titulo: 'Precio unit.', tipo: 'soles' },
         { titulo: 'Subtotal', tipo: 'soles' },
+        { titulo: 'Valor venta', tipo: 'soles' },
+        { titulo: 'IGV', tipo: 'soles' },
         { titulo: 'Costo', tipo: 'soles' },
         { titulo: 'Ganancia', tipo: 'soles' },
       ],
@@ -153,6 +158,8 @@ export default function Reportes() {
         f.cantidad,
         f.precioUnitario,
         f.subtotal,
+        f.valorVenta,
+        f.igv,
         f.costo,
         f.ganancia,
       ]),
@@ -208,7 +215,7 @@ export default function Reportes() {
 
       <section className="tarjeta">
         <h2>Ventas por período</h2>
-        <p className="tenue">Cada lote vendido, con su costo y la ganancia bruta. Hasta un año por reporte.</p>
+        <p className="tenue">Cada lote vendido con el IGV separado, su costo y la ganancia bruta sin IGV. Hasta un año por reporte.</p>
         <div className="dos-columnas">
           <label>
             Desde

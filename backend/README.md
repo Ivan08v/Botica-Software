@@ -11,7 +11,7 @@ API del sistema de inventario y vencimientos para boticas y veterinarias. NestJS
 | `productos` | Catálogo: nombre, laboratorio, presentación, código de barras, precio y stock mínimo |
 | `lotes` | Cada ingreso de mercadería: número de lote, fecha de vencimiento, cantidad y costo |
 | `clientes` | Clientes del negocio identificados por DNI, carné de extranjería o RUC, con nombre (o razón social), teléfono, correo y dirección fiscal |
-| `ventas` | Cabecera de cada venta: fecha, usuario, cliente, total, comprobante (boleta o factura, con serie y número), medio de pago y monto recibido |
+| `ventas` | Cabecera de cada venta: fecha, usuario, cliente, total separado en operación gravada e IGV, comprobante (boleta o factura, con serie y número), medio de pago y monto recibido |
 | `detalle_venta` | Una línea por cada lote usado en una venta (para FEFO) |
 | `movimientos` | Historial de todo lo que cambia el stock: ingresos, ventas, ajustes y bajas por vencimiento |
 
@@ -60,7 +60,8 @@ Todas las rutas llevan el prefijo `/api` y, salvo el login, piden el encabezado 
 | --- | --- | --- |
 | `POST /auth/login` | Público | Devuelve `accessToken`, los datos del usuario y su negocio |
 | `GET /auth/me` | Cualquier rol | Usuario del token |
-| `GET /productos?buscar=&incluirInactivos=` | Cualquier rol | Lista con `stock` y `stockBajo` calculados |
+| `GET /productos?buscar=&incluirInactivos=` | Cualquier rol | Lista con `stock` y `stockBajo` calculados, y `proximoLote`: el lote que FEFO entregará primero |
+| `GET /productos/frecuentes` | Cualquier rol | Los 6 más vendidos de los últimos 30 días que tienen stock: accesos rápidos de la caja |
 | `GET /productos/:id` | Cualquier rol | Producto con sus lotes |
 | `GET /productos/codigo/:codigoBarras` | Cualquier rol | Búsqueda para el lector de códigos |
 | `POST /productos` | DUENO | Crea un producto |
@@ -70,6 +71,7 @@ Todas las rutas llevan el prefijo `/api` y, salvo el login, piden el encabezado 
 | `POST /lotes` | Cualquier rol | Ingresa un lote y registra el movimiento `INGRESO` |
 | `POST /ventas` | Cualquier rol | Registra una venta `{ "items": [{ "productoId": 1, "cantidad": 3 }], "clienteId": 5, "tipoComprobante": "BOLETA", "medioPago": "EFECTIVO", "montoRecibido": 20 }` descontando stock con FEFO. Solo `items` es obligatorio (ver [Comprobantes y medios de pago](#comprobantes-y-medios-de-pago)) |
 | `GET /ventas` | Cualquier rol | Últimas 50 ventas |
+| `GET /ventas/proximo-comprobante` | Cualquier rol | Número que llevará la próxima boleta y factura (informativo: el definitivo se asigna al cobrar) |
 | `GET /ventas/:id` | Cualquier rol | Venta con el detalle de cada lote usado, el código del comprobante (`B001-00000012`) y el vuelto |
 | `POST /importacion/vista-previa` | DUENO | Valida las filas de un Excel de inventario y devuelve el estado de cada una, sin guardar |
 | `POST /importacion/confirmar` | DUENO | Vuelve a validar y guarda productos, lotes y movimientos en una transacción |
@@ -101,7 +103,8 @@ Cada venta guarda qué comprobante se entregó y cómo se pagó. El sistema los 
 
 - **Boleta o factura**, con serie y número correlativo por negocio: `B001-00000001`, `F001-00000001`. Un bloqueo de PostgreSQL (`pg_advisory_xact_lock`, uno por negocio y tipo) hace que dos ventas simultáneas reciban números seguidos, sin saltos ni repetidos.
 - **La factura exige un cliente con RUC.** La boleta puede ser anónima hasta S/ 700; por encima, SUNAT pide identificar al cliente.
-- **Medio de pago**: `EFECTIVO`, `TARJETA`, `YAPE`, `PLIN` o `TRANSFERENCIA`. En efectivo se puede indicar el `montoRecibido` y la respuesta trae el `vuelto`; si no cubre el total, la venta se rechaza (y la base lo impide con un `CHECK`).
+- **Medio de pago**: `EFECTIVO`, `TARJETA`, `YAPE` o `PLIN`, los que se usan en el mostrador de una botica (`TRANSFERENCIA` queda en la base solo por ventas antiguas y ya no se acepta). En efectivo se puede indicar el `montoRecibido` y la respuesta trae el `vuelto`; si no cubre el total, la venta se rechaza (y la base lo impide con un `CHECK`).
+- **IGV**: los precios de venta ya incluyen el IGV (18 %). Al registrar la venta, el servidor separa la **operación gravada** (lo que es de la botica) del **IGV** (lo que se paga a SUNAT), línea por línea: valor de cada línea = importe / 1.18 redondeado a céntimos, e IGV = total − operación gravada. Se guardan en la venta y un `CHECK` asegura que siempre sumen el total ([src/common/igv.ts](src/common/igv.ts)).
 - **Un cliente con compras no se elimina**: la llave foránea es `ON DELETE RESTRICT`, así ninguna venta queda sin saber a quién se le hizo.
 
 Las pruebas están en [test/comprobantes.e2e-spec.ts](test/comprobantes.e2e-spec.ts) (incluye diez ventas simultáneas que reciben diez números seguidos) y en [test/clientes.e2e-spec.ts](test/clientes.e2e-spec.ts).
@@ -130,6 +133,7 @@ Los endpoints de reportes devuelven JSON; el navegador lo convierte en Excel o P
 
 - **Ventas por día de Perú**: un período del 01/10 al 09/10 va desde las 00:00 del 01/10 hasta las 23:59 del 09/10 en Lima (05:00 UTC). Una venta a las 23:30 cuenta en ese día aunque en UTC ya sea el siguiente.
 - **Ganancia con el costo real**: gracias a FEFO cada línea de venta sabe de qué lote salió, así que la ganancia usa el costo de ese lote y no un promedio.
+- **Ganancia sin IGV**: el IGV se le cobra al cliente pero se paga a SUNAT, así que se quita antes de calcular la ganancia: ganancia = venta sin IGV − costo. El reporte muestra el total cobrado, el IGV y la venta sin IGV por separado. El costo de cada lote se usa tal como se registró en el ingreso.
 
 ## Comandos
 

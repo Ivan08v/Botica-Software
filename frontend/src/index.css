@@ -3404,3 +3404,316 @@ kbd {
   flex: none;
   white-space: nowrap;
 }
+
+/* --- Reportes y exportación --- */
+
+.contenido:has(.reportes) {
+  max-width: 80rem;
+}
+
+.reportes {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.reportes > .aviso {
+  margin: 0;
+}
+
+.reportes-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.reportes-cabecera h2 {
+  display: block;
+  margin: 0;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.reportes-cabecera p {
+  margin: 0.15rem 0 0;
+  font-size: 0.8rem;
+}
+
+.reportes-cabecera > .tenue {
+  font-size: 0.75rem;
+}
+
+/* Un tono más para el reporte de ventas */
+.tono-indigo {
+  --tono: #6366f1;
+  --tono-texto: #4338ca;
+  --tono-suave: #eef2ff;
+  --tono-borde: #c7d2fe;
+}
+
+.tarjeta-reporte {
+  padding: 1.5rem;
+  border-color: #e2e8f0;
+  border-radius: 0.85rem;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
+  transition: border-color 0.15s;
+}
+
+.tarjeta-reporte:hover {
+  border-color: #cbd5e1;
+}
+
+.tarjeta-reporte-cuerpo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem 1.5rem;
+}
+
+.tarjeta-reporte-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  flex: 1 1 26rem;
+  max-width: 40rem;
+}
+
+.reporte-icono {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2.75rem;
+  height: 2.75rem;
+  font-size: 1.45rem;
+  color: var(--tono-texto);
+  background: var(--tono-suave);
+  border: 1px solid var(--tono-borde);
+  border-radius: 0.6rem;
+}
+
+.reporte-icono .icono {
+  vertical-align: 0;
+}
+
+.tarjeta-reporte h3 {
+  margin: 0 0 0.2rem;
+  font-family: "Plus Jakarta Sans", Inter, sans-serif;
+  font-size: 1rem;
+}
+
+.tarjeta-reporte-info .tenue {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.55;
+}
+
+.reporte-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1rem;
+  margin-top: 0.75rem;
+}
+
+.filtro-en-linea {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #475569;
+}
+
+.filtro-en-linea select,
+.filtro-en-linea input {
+  width: auto;
+  padding: 0.4rem 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #334155;
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  border-radius: 0.5rem;
+}
+
+.reporte-descargas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+@media (min-width: 64rem) {
+  .reporte-descargas {
+    padding-left: 1.5rem;
+    border-left: 1px solid #f1f5f9;
+  }
+}
+
+.boton-excel,
+.boton-pdf {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.65rem 1rem;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.boton-excel {
+  color: #fff;
+  background: #059669;
+  border: 1px solid #059669;
+  box-shadow: 0 1px 2px rgb(5 150 105 / 0.25);
+}
+
+.boton-excel:hover:not(:disabled) {
+  background: #047857;
+}
+
+.boton-pdf {
+  color: #334155;
+  background: #fff;
+  border: 1px solid #cbd5e1;
+}
+
+.boton-pdf .icono {
+  color: #f43f5e;
+}
+
+.boton-pdf:hover:not(:disabled) {
+  background: #f8fafc;
+}
+
+.boton-excel:disabled,
+.boton-pdf:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.boton-excel .icono,
+.boton-pdf .icono {
+  font-size: 1.1rem;
+  vertical-align: 0;
+}
+
+/* Vista previa de exportación */
+.vista-previa {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.vista-previa-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem 1rem;
+  margin-bottom: 0.6rem;
+  font-size: 0.78rem;
+}
+
+.vista-previa-cabecera strong {
+  color: #334155;
+}
+
+.vista-previa-cabecera .chip {
+  font-size: 0.68rem;
+  font-weight: 500;
+}
+
+.vista-previa-cabecera > .tenue {
+  font-size: 0.72rem;
+}
+
+.vista-previa-icono {
+  display: inline-grid;
+  color: var(--tono-texto);
+}
+
+.vista-previa-icono .icono {
+  font-size: 1.05rem;
+  vertical-align: 0;
+}
+
+.vista-previa-vacia {
+  margin: 0;
+  padding: 1rem;
+  text-align: center;
+  background: #f8fafc;
+  border: 1px dashed #e2e8f0;
+  border-radius: 0.5rem;
+}
+
+.vista-previa .tabla-envoltura {
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+}
+
+.tabla-vista-previa {
+  font-size: 0.78rem;
+}
+
+.tabla-vista-previa thead th {
+  padding: 0.55rem 0.75rem;
+  font-size: 0.7rem;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #475569;
+  background: #f1f5f9;
+}
+
+.tabla-vista-previa td {
+  padding: 0.55rem 0.75rem;
+  white-space: nowrap;
+}
+
+.tabla-vista-previa td.producto {
+  white-space: normal;
+  min-width: 12rem;
+}
+
+.tabla-vista-previa .codigo-celda {
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 0.72rem;
+  color: #475569;
+}
+
+.tabla-vista-previa .centro {
+  text-align: center;
+}
+
+.tabla-vista-previa .chip {
+  font-size: 0.68rem;
+}
+
+.tabla-vista-previa tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+/* Las celdas atenuadas conservan el tamaño de la tabla */
+.tabla-vista-previa .tenue {
+  font-size: inherit;
+}
+
+/* En celular los dos botones de descarga ocupan el ancho */
+@media (max-width: 40rem) {
+  .reporte-descargas {
+    width: 100%;
+  }
+
+  .reporte-descargas > button {
+    flex: 1 1 100%;
+  }
+}

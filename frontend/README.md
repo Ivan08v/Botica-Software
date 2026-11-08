@@ -32,7 +32,7 @@ En desarrollo no hay que configurar nada: Vite reenvía las llamadas a `/api` ha
 | `/ingreso` | Todos | Registra un lote que llegó: número, vencimiento, cantidad y costo |
 | `/productos` | Todos (editar: dueño) | Catálogo con stock; el dueño crea, edita y desactiva |
 | `/clientes` | Todos | Registrar, buscar, editar y eliminar clientes (DNI, CE o RUC) y ver su historial de compras |
-| `/reportes` | Dueño | Inventario valorizado, lotes por vencer y ventas por período, en Excel o PDF |
+| `/reportes` | Dueño | Inventario valorizado (todos, vigentes o vencidos), lotes por vencer y ventas por período con comprobante, cliente, medio de pago e IGV; cada uno con vista previa y descarga en Excel o PDF |
 | `/productos/importar` | Dueño | Importa el inventario desde Excel: plantilla, vista previa con errores por fila y confirmación |
 
 ## Estructura

@@ -23,7 +23,14 @@ const MODULOS = [
   { ruta: '/ingreso', titulo: 'Ingreso de lotes', corto: 'Ingreso', icono: 'move_to_inbox' },
   { ruta: '/productos', titulo: 'Productos y stock', corto: 'Productos', icono: 'inventory_2' },
   { ruta: '/clientes', titulo: 'Clientes', corto: 'Clientes', icono: 'group' },
-  { ruta: '/reportes', titulo: 'Reportes', corto: 'Reportes', icono: 'receipt_long', soloDueno: true },
+  {
+    ruta: '/reportes',
+    titulo: 'Reportes y exportación',
+    subtitulo: 'Inventario valorizado, vencimientos y ventas en Excel o PDF',
+    corto: 'Reportes',
+    icono: 'receipt_long',
+    soloDueno: true,
+  },
 ]
 
 function moduloDe(ruta) {

@@ -104,7 +104,16 @@ export async function reporteVentas(negocioId, desde, hasta) {
   const detalles = await prisma.detalleVenta.findMany({
     where: { venta: { negocioId, fecha: { gte: inicio, lt: fin } } },
     include: {
-      venta: { select: { fecha: true, usuario: { select: { nombre: true } } } },
+      venta: {
+        select: {
+          fecha: true,
+          serie: true,
+          numero: true,
+          medioPago: true,
+          usuario: { select: { nombre: true } },
+          cliente: { select: { nombre: true, tipoDocumento: true, documento: true } },
+        },
+      },
       producto: { select: { nombre: true, presentacion: true } },
       lote: { select: { numeroLote: true, costoUnitario: true } },
     },
@@ -134,6 +143,11 @@ export async function reporteVentas(negocioId, desde, hasta) {
       fecha: d.venta.fecha.toISOString(),
       dia: fechaEnLima(d.venta.fecha),
       vendedor: d.venta.usuario.nombre,
+      // Ventas antiguas cargadas directo a la base pueden no tener serie: entonces va null
+      comprobante: d.venta.serie && d.venta.numero ? `${d.venta.serie}-${String(d.venta.numero).padStart(8, "0")}` : null,
+      medioPago: d.venta.medioPago,
+      cliente: d.venta.cliente?.nombre ?? null,
+      documentoCliente: d.venta.cliente ? `${d.venta.cliente.tipoDocumento} ${d.venta.cliente.documento}` : null,
       producto: d.producto.nombre,
       presentacion: d.producto.presentacion,
       numeroLote: d.lote.numeroLote,

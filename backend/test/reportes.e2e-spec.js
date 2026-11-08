@@ -11,6 +11,7 @@ describe("Reportes (e2e)", () => {
   let prisma;
   let tokenDueno;
   let tokenVendedor;
+  let negocioId;
 
   function enDias(dias) {
     const d = hoyEnLima();
@@ -26,7 +27,7 @@ describe("Reportes (e2e)", () => {
 
     const marca = Date.now();
     const passwordHash = await bcrypt.hash("Reporte1234", 4);
-    const negocioId = (await prisma.negocio.create({ data: { nombre: `Reportes ${marca}` } })).id;
+    negocioId = (await prisma.negocio.create({ data: { nombre: `Reportes ${marca}` } })).id;
     const dueno = await prisma.usuario.create({
       data: {
         negocioId,
@@ -164,6 +165,43 @@ describe("Reportes (e2e)", () => {
         igv: "1.53",
         costo: "4.00",
         ganancia: "4.47",
+        // Estas ventas se cargaron directo a la base: sin serie ni cliente, en efectivo por defecto
+        comprobante: null,
+        medioPago: "EFECTIVO",
+        cliente: null,
+        documentoCliente: null,
+      }),
+    );
+  });
+
+  it("ventas: cada fila trae el comprobante, el cliente y el medio de pago de su venta", async () => {
+    const cliente = await prisma.cliente.create({
+      data: { negocioId, tipoDocumento: "RUC", documento: "20123456789", nombre: "Clínica Reporte S.A.C." },
+    });
+    const producto = await prisma.producto.findFirstOrThrow({ where: { negocioId } });
+    const lote = await prisma.lote.findFirstOrThrow({ where: { productoId: producto.id, cantidadActual: { gt: 0 } } });
+    await prisma.venta.create({
+      data: {
+        negocioId,
+        usuarioId: (await prisma.usuario.findFirstOrThrow({ where: { negocioId } })).id,
+        fecha: new Date("2026-09-15T15:00:00Z"),
+        total: 5,
+        tipoComprobante: "FACTURA",
+        serie: "F001",
+        numero: 7,
+        medioPago: "YAPE",
+        clienteId: cliente.id,
+        detalles: { create: [{ productoId: producto.id, loteId: lote.id, cantidad: 1, precioUnitario: 5 }] },
+      },
+    });
+
+    const res = await pedir("ventas?desde=2026-09-15&hasta=2026-09-15").expect(200);
+    expect(res.body.filas[0]).toEqual(
+      expect.objectContaining({
+        comprobante: "F001-00000007",
+        medioPago: "YAPE",
+        cliente: "Clínica Reporte S.A.C.",
+        documentoCliente: "RUC 20123456789",
       }),
     );
   });

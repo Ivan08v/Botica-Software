@@ -1,6 +1,23 @@
 # Botica – Backend
 
-API del sistema de inventario y vencimientos para boticas y veterinarias. NestJS + Prisma 7 + PostgreSQL 16.
+API del sistema de inventario y vencimientos para boticas y veterinarias, en **Node.js con Express** y JavaScript (módulos ES). Usa Prisma 7 con PostgreSQL 16, JWT para el inicio de sesión y Zod para validar los datos que llegan.
+
+## Estructura
+
+Cada módulo tiene dos archivos: `rutas.js` (las rutas de Express y la validación de lo que llega) y `servicio.js` (la lógica y las consultas a la base). Así una ruta queda corta: valida, llama al servicio y responde.
+
+| Archivo | Qué hace |
+| --- | --- |
+| [src/servidor.js](src/servidor.js) | Arranca la API (`npm run start:dev`) |
+| [src/app.js](src/app.js) | Arma la app de Express: CORS, JSON, todas las rutas bajo `/api` y el manejo de errores |
+| [src/prisma.js](src/prisma.js) | Única conexión a PostgreSQL para toda la app |
+| [src/errores.js](src/errores.js) | Errores HTTP (`noEncontrado`, `conflicto`…) y el middleware que los convierte en `{ statusCode, message, error }` |
+| [src/validacion.js](src/validacion.js) | Valida con Zod; un campo desconocido o mal escrito responde 400 con el detalle |
+| [src/auth/](src/auth/) | Login (bcrypt + JWT), `autenticar` (exige el token) y `requiereRol("DUENO")` |
+| [src/productos/](src/productos/), [lotes/](src/lotes/), [ventas/](src/ventas/), [clientes/](src/clientes/), [panel/](src/panel/), [importacion/](src/importacion/), [reportes/](src/reportes/) | Un módulo por tema, con `rutas.js` y `servicio.js` |
+| [src/common/](src/common/) | Fechas en hora de Perú e IGV |
+
+Las funciones puras (reparto FEFO, tramos de vencimiento, IGV, análisis del Excel) no tocan la base y tienen sus propias pruebas unitarias (`*.spec.js`).
 
 ## Modelo de datos
 
@@ -21,7 +38,7 @@ El stock de un producto no se guarda en `productos`: es la suma de `cantidad_act
 
 Cada botica o veterinaria es una fila de `negocios`, y usuarios, productos, lotes, ventas y movimientos llevan su `negocio_id`. Al iniciar sesión, el `negocioId` del usuario queda dentro del token JWT firmado, y todas las consultas filtran por él: el cliente nunca puede elegir el negocio. Un dato de otro negocio responde `404`, igual que si no existiera.
 
-El código de barras es único por negocio (no en toda la base), porque dos boticas venden el mismo producto. Las pruebas de [test/aislamiento.e2e-spec.ts](test/aislamiento.e2e-spec.ts) verifican que un negocio no puede ver, editar ni vender lo de otro.
+El código de barras es único por negocio (no en toda la base), porque dos boticas venden el mismo producto. Las pruebas de [test/aislamiento.e2e-spec.js](test/aislamiento.e2e-spec.js) verifican que un negocio no puede ver, editar ni vender lo de otro.
 
 ## Requisitos
 
@@ -92,10 +109,10 @@ FEFO (*first expired, first out*): sale primero lo que vence primero. Al registr
 
 1. Todo ocurre en **una transacción**: si un producto no tiene stock suficiente, no se descuenta ni se guarda nada (respuesta `409`).
 2. Los lotes vendibles del producto (no vencidos y con stock) se leen ordenados por vencimiento con `SELECT ... FOR UPDATE`. Ese bloqueo hace que dos ventas simultáneas del mismo producto se atiendan una después de la otra, y la segunda ve el stock ya descontado.
-3. La cantidad se reparte lote por lote ([src/ventas/fefo.ts](src/ventas/fefo.ts)); se guarda una línea de `detalle_venta` y un movimiento `VENTA` por cada lote usado.
+3. La cantidad se reparte lote por lote ([src/ventas/fefo.js](src/ventas/fefo.js)); se guarda una línea de `detalle_venta` y un movimiento `VENTA` por cada lote usado.
 4. Como última barrera, la base tiene `CHECK (cantidad_actual >= 0)`.
 
-Las pruebas cubren: venta que usa varios lotes, stock insuficiente, lotes vencidos que no se venden y ventas simultáneas ([test/ventas.e2e-spec.ts](test/ventas.e2e-spec.ts)).
+Las pruebas cubren: venta que usa varios lotes, stock insuficiente, lotes vencidos que no se venden y ventas simultáneas ([test/ventas.e2e-spec.js](test/ventas.e2e-spec.js)).
 
 ## Comprobantes y medios de pago
 
@@ -104,10 +121,10 @@ Cada venta guarda qué comprobante se entregó y cómo se pagó. El sistema los 
 - **Boleta o factura**, con serie y número correlativo por negocio: `B001-00000001`, `F001-00000001`. Un bloqueo de PostgreSQL (`pg_advisory_xact_lock`, uno por negocio y tipo) hace que dos ventas simultáneas reciban números seguidos, sin saltos ni repetidos.
 - **La factura exige un cliente con RUC.** La boleta puede ser anónima hasta S/ 700; por encima, SUNAT pide identificar al cliente.
 - **Medio de pago**: `EFECTIVO`, `TARJETA`, `YAPE` o `PLIN`, los que se usan en el mostrador de una botica (`TRANSFERENCIA` queda en la base solo por ventas antiguas y ya no se acepta). En efectivo se puede indicar el `montoRecibido` y la respuesta trae el `vuelto`; si no cubre el total, la venta se rechaza (y la base lo impide con un `CHECK`).
-- **IGV**: los precios de venta ya incluyen el IGV (18 %). Al registrar la venta, el servidor separa la **operación gravada** (lo que es de la botica) del **IGV** (lo que se paga a SUNAT), línea por línea: valor de cada línea = importe / 1.18 redondeado a céntimos, e IGV = total − operación gravada. Se guardan en la venta y un `CHECK` asegura que siempre sumen el total ([src/common/igv.ts](src/common/igv.ts)).
+- **IGV**: los precios de venta ya incluyen el IGV (18 %). Al registrar la venta, el servidor separa la **operación gravada** (lo que es de la botica) del **IGV** (lo que se paga a SUNAT), línea por línea: valor de cada línea = importe / 1.18 redondeado a céntimos, e IGV = total − operación gravada. Se guardan en la venta y un `CHECK` asegura que siempre sumen el total ([src/common/igv.js](src/common/igv.js)).
 - **Un cliente con compras no se elimina**: la llave foránea es `ON DELETE RESTRICT`, así ninguna venta queda sin saber a quién se le hizo.
 
-Las pruebas están en [test/comprobantes.e2e-spec.ts](test/comprobantes.e2e-spec.ts) (incluye diez ventas simultáneas que reciben diez números seguidos) y en [test/clientes.e2e-spec.ts](test/clientes.e2e-spec.ts).
+Las pruebas están en [test/comprobantes.e2e-spec.js](test/comprobantes.e2e-spec.js) (incluye diez ventas simultáneas que reciben diez números seguidos) y en [test/clientes.e2e-spec.js](test/clientes.e2e-spec.js).
 
 ## Panel
 
@@ -122,7 +139,7 @@ Las pruebas están en [test/comprobantes.e2e-spec.ts](test/comprobantes.e2e-spec
 El navegador lee el archivo y envía las filas como JSON (una fila por lote, hasta 2000). El servidor nunca recibe el archivo.
 
 - **Dos pasos**: `vista-previa` no guarda nada; `confirmar` repite la validación dentro de la transacción, porque los datos pudieron cambiar y nunca se confía en un resultado enviado por el navegador.
-- **Misma función para ambos** ([src/importacion/analisis.ts](src/importacion/analisis.ts)): lo que se ve en la vista previa es exactamente lo que se guarda.
+- **Misma función para ambos** ([src/importacion/analisis.js](src/importacion/analisis.js)): lo que se ve en la vista previa es exactamente lo que se guarda.
 - **Errores por fila**: una fila mala no rechaza el archivo; se omite y se informa con su número de fila.
 - **Reimportar no duplica**: un lote que ya existe se omite. Un producto se reconoce por su código de barras o, si no tiene, por nombre y presentación.
 - **Lotes vencidos**: se aceptan con un aviso, porque el inventario inicial puede incluir mercadería vencida sin retirar.
@@ -139,7 +156,8 @@ Los endpoints de reportes devuelven JSON; el navegador lo convierte en Excel o P
 
 | Comando | Para qué |
 | --- | --- |
-| `npm run start:dev` | Levanta la API y la reinicia al guardar cambios |
+| `npm run start:dev` | Levanta la API y la reinicia al guardar cambios (`node --watch`) |
+| `npm start` | Levanta la API sin reinicio automático (producción) |
 | `npm test` | Pruebas unitarias |
 | `npm run test:e2e` | Pruebas de extremo a extremo. Usan su propia base `botica_test`, que se crea, migra y carga sola; no tocan la de desarrollo |
 | `npm run db:up` | Levanta PostgreSQL en Docker |
@@ -147,4 +165,3 @@ Los endpoints de reportes devuelven JSON; el navegador lo convierte en Excel o P
 | `npm run db:generate` | Regenera el cliente de Prisma |
 | `npm run db:seed` | Borra todo y vuelve a cargar los datos de prueba |
 | `npm run db:studio` | Explora los datos en el navegador |
-| `npm run typecheck` | Revisa los tipos de TypeScript |

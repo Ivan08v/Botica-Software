@@ -3,7 +3,7 @@
 // y la API filtra siempre por el negocio del usuario que inició sesión.
 
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../src/generated/prisma"
 }
 

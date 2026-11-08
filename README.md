@@ -45,7 +45,7 @@ Las capturas usan los datos de demostración del seed; los clientes que aparecen
 
 | Parte | Stack |
 | --- | --- |
-| [backend/](backend/) | NestJS, TypeScript, Prisma 7, PostgreSQL 16, JWT, Jest |
+| [backend/](backend/) | Node.js + Express 5 (JavaScript, módulos ES), Prisma 7, PostgreSQL 16, JWT, Zod, Jest |
 | [frontend/](frontend/) | React 19 (JavaScript, `.jsx`), Vite, React Router, CSS propio (tipografías Inter y Plus Jakarta Sans, íconos Material Symbols), barcode-detector (ZXing en WebAssembly), SheetJS, jsPDF |
 
 ## Decisiones técnicas

@@ -1,5 +1,5 @@
 # Integración continua: en cada push a main y en cada pull request se revisa que
-# el backend compile y pase sus pruebas contra PostgreSQL real, y que el frontend compile.
+# el backend (Node.js + Express) pase sus pruebas contra PostgreSQL real, y que el frontend compile.
 name: CI
 
 on:
@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   backend:
-    name: Backend (tipos, compilación y pruebas)
+    name: Backend (pruebas)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -56,16 +56,10 @@ jobs:
       - name: Generar el cliente de Prisma
         run: npx prisma generate
 
-      - name: Revisar tipos
-        run: npm run typecheck
-
-      - name: Compilar
-        run: npm run build
-
       - name: Pruebas unitarias
         run: npm test
 
-      # Crean, migran y cargan la base botica_test antes de correr (test/global-setup.ts)
+      # Crean, migran y cargan la base botica_test antes de correr (test/global-setup.js)
       - name: Pruebas de extremo a extremo
         run: npm run test:e2e
 

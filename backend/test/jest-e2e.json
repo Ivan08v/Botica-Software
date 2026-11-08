@@ -1,21 +1,9 @@
 {
-  "moduleFileExtensions": [
-    "js",
-    "json",
-    "ts"
-  ],
   "rootDir": ".",
   "testEnvironment": "node",
-  "testRegex": ".e2e-spec.ts$",
-  "transform": {
-    "^.+\\.(t|j)s$": "ts-jest"
-  },
-  "moduleNameMapper": {
-    "^(\\.{1,2}/.*)\\.js$": "$1"
-  },
-  "globalSetup": "<rootDir>/global-setup.ts",
-  "setupFiles": [
-    "<rootDir>/entorno.ts"
-  ],
+  "testRegex": ".e2e-spec.js$",
+  "transform": {},
+  "globalSetup": "<rootDir>/global-setup.js",
+  "setupFiles": ["<rootDir>/entorno.js"],
   "testTimeout": 30000
 }
